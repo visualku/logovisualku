@@ -1,293 +1,68 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Detail Kontes - LogoVisualku</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: 'Segoe UI', sans-serif;
-        }
-
-        body {
-            background-color: #f8f9fa;
-            color: #1a1a1a;
-        }
-
-        .navbar {
-            background: white;
-            box-shadow: 0 2px 20px rgba(0, 0, 0, 0.1);
-            padding: 1rem 0;
-        }
-
-        .navbar-brand {
-            font-weight: 700;
-            color: #001f4d !important;
-        }
-
-        .card {
-            border-radius: 16px;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
-            overflow: hidden;
-        }
-
-        .upload-area {
-            border: 2px dashed #001f4d;
-            border-radius: 12px;
-            text-align: center;
-            padding: 40px 20px;
-            cursor: pointer;
-            transition: all 0.3s;
-        }
-
-        .upload-area:hover {
-            background: #f0f5ff;
-            border-color: #001533;
-        }
-
-        .gallery {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-            gap: 15px;
-            margin-top: 20px;
-        }
-
-        .gallery-item {
-            border: 1px solid #ddd;
-            border-radius: 8px;
-            overflow: hidden;
-            position: relative;
-        }
-
-        .gallery-item img {
-            width: 100%;
-            height: 150px;
-            object-fit: cover;
-        }
-
-        .btn-primary {
-            background-color: #001f4d;
-            border: none;
-            padding: 10px 25px;
-            border-radius: 50px;
-            font-weight: 600;
-        }
-
-        footer {
-            background: #001f4d;
-            color: #ddd;
-            padding: 60px 0 30px;
-            margin-top: 80px;
-        }
-    </style>
 </head>
 <body>
-    <!-- Navbar -->
-    <nav class="navbar navbar-expand-lg navbar-light">
-        <div class="container">
-            <a class="navbar-brand" href="index.html">
-                <i class="fas fa-trophy me-2"></i>LogoVisualku
-            </a>
-            <div class="ms-auto">
-                <a href="dashboard.html" class="btn btn-outline-primary btn-sm">Dashboard</a>
-            </div>
-        </div>
-    </nav>
+    <input type="file" id="fileInput" accept="image/*">
+    <button onclick="upload()">Upload (350x280px, <300KB)</button>
+    <div id="gallery"></div>
 
-    <!-- Main Content -->
-    <div class="container py-5">
-        <div class="row">
-            <div class="col-lg-8">
-                <!-- Contest Brief -->
-                <div class="card mb-4">
-                    <div class="card-body">
-                        <h4 id="businessName">Logo Cafe "Brew & Bean"</h4>
-                        <p id="description">Warung kopi tradisional dengan nuansa modern. Warna merah & kuning.</p>
-                        <div class="row">
-                            <div class="col-md-6">
-                                <p><strong>Gaya:</strong> <span id="style">Minimalis</span></p>
-                                <p><strong>Warna:</strong> <span id="color">Merah & Kuning</span></p>
-                            </div>
-                            <div class="col-md-6">
-                                <p><strong>Hadiah:</strong> <span id="prize" style="color: #001f4d; font-weight: 600;">Rp 1.500.000</span></p>
-                                <p><strong>Sisa Waktu:</strong> <span id="timeLeft">2 hari 12 jam</span></p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Upload Desain -->
-                <div class="card">
-                    <div class="card-body">
-                        <h5>Upload Desain Anda (350x280px, <300KB)</h5>
-                        <div class="upload-area" id="uploadArea">
-                            <i class="fas fa-cloud-upload-alt" style="font-size: 3rem; color: #001f4d;"></i>
-                            <p class="mt-3">Klik atau seret file ke sini</p>
-                            <small class="text-muted">Hanya file PNG/JPG, maks 300KB</small>
-                            <input type="file" id="fileInput" accept="image/*" style="display: none;">
-                        </div>
-                        <div id="uploadStatus" class="mt-3"></div>
-                    </div>
-                </div>
-
-                <!-- Galeri Desain -->
-                <div class="card mt-4">
-                    <div class="card-body">
-                        <h5>Desain yang Masuk</h5>
-                        <div class="gallery" id="gallery">
-                            <!-- Desain akan muncul di sini -->
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="col-lg-4">
-                <div class="card">
-                    <div class="card-body">
-                        <h6>Komentar Umum</h6>
-                        <div id="comments" style="max-height: 300px; overflow-y: auto;">
-                            <p><strong>CH:</strong> Saya suka konsepnya, bisa ganti fontnya?</p>
-                        </div>
-                        <textarea class="form-control mt-3" rows="3" placeholder="Tulis komentar..."></textarea>
-                        <button class="btn btn-primary btn-sm mt-2">Kirim</button>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Footer -->
-    <footer>
-        <div class="container">
-            <div class="text-center">
-                <p>&copy; 2024 LogoVisualku. Semua hak cipta dilindungi.</p>
-            </div>
-        </div>
-    </footer>
-
-    <!-- Firebase SDK -->
-    <script type="module">
-      // Import Firebase
-      import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
-      import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js";
-      import { getFirestore, collection, query, where, getDocs, addDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
-
-      // Your web app's Firebase configuration
-      const firebaseConfig = {
-        apiKey: "AIzaSyBmoIXKp8BABwBMqKKXhSUBLGnYSnKNAYg",
-        authDomain: "logovisualku.firebaseapp.com",
-        projectId: "logovisualku",
-        storageBucket: "logovisualku.firebasestorage.app",
-        messagingSenderId: "64489762880",
-        appId: "1:64489762880:web:f55f26b068044f1320afa5"
-      };
-
-      // Initialize Firebase
-      const app = initializeApp(firebaseConfig);
-      const auth = getAuth(app);
-      const db = getFirestore(app);
-
-      // Ambil kode kontes dari URL
-      const urlParams = new URLSearchParams(window.location.search);
-      const contestCode = urlParams.get('code');
-
-      // Tampilkan data kontes
-      if (contestCode) {
-        const q = query(collection(db, 'contests'), where('contestCode', '==', contestCode));
-        const querySnapshot = await getDocs(q);
-        if (!querySnapshot.empty) {
-          const data = querySnapshot.docs[0].data();
-          document.getElementById('businessName').textContent = data.businessName;
-          document.getElementById('description').textContent = data.description;
-          document.getElementById('style').textContent = data.style;
-          document.getElementById('color').textContent = data.color;
-          document.getElementById('prize').textContent = `Rp ${data.prize.toLocaleString()}`;
-        }
-      }
-
-      // Validasi & Upload ke Google Drive Anda
-      const fileInput = document.getElementById('fileInput');
-      const uploadArea = document.getElementById('uploadArea');
-      const uploadStatus = document.getElementById('uploadStatus');
-
-      uploadArea.addEventListener('click', () => fileInput.click());
-      uploadArea.addEventListener('dragover', (e) => {
-        e.preventDefault();
-        uploadArea.style.borderColor = '#001533';
-      });
-      uploadArea.addEventListener('dragleave', () => {
-        uploadArea.style.borderColor = '#001f4d';
-      });
-      uploadArea.addEventListener('drop', (e) => {
-        e.preventDefault();
-        uploadArea.style.borderColor = '#001f4d';
-        if (e.dataTransfer.files.length) {
-          handleFile(e.dataTransfer.files[0]);
-        }
-      });
-
-      fileInput.addEventListener('change', () => {
-        if (fileInput.files.length) {
-          handleFile(fileInput.files[0]);
-        }
-      });
-
-      async function handleFile(file) {
-        // Cek ukuran file
-        if (file.size > 300 * 1024) {
-          uploadStatus.innerHTML = '<div class="alert alert-danger">Gagal: File harus <300KB</div>';
-          return;
-        }
-
-        // Cek dimensi gambar
-        const img = new Image();
-        img.src = URL.createObjectURL(file);
-        img.onload = async () => {
-          if (img.width !== 350 || img.height !== 280) {
-            uploadStatus.innerHTML = '<div class="alert alert-danger">Gagal: Ukuran harus 350x280px</div>';
-            return;
-          }
-
-          // Simulasi upload ke Google Drive Anda
-          // Di sini Anda bisa integrasi dengan Google Drive API
-          uploadStatus.innerHTML = '<div class="alert alert-success">Upload berhasil! (Simulasi)</div>';
-          
-          // Simpan ke Firestore (dengan link Google Drive)
-          await addDoc(collection(db, 'submissions'), {
-            contestCode,
-            fileName: file.name,
-            driveLink: 'https://drive.google.com/file/d/ABC123/view',
-            uploadedAt: new Date(),
-            designerId: auth.currentUser ? auth.currentUser.uid : 'guest'
-          });
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js"></script>
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyBmoIXKp8BABwBMqKKXhSUBLGnYSnKNAYg",
+            authDomain: "logovisualku.firebaseapp.com",
+            projectId: "logovisualku",
+            storageBucket: "logovisualku.firebasestorage.app",
+            messagingSenderId: "64489762880",
+            appId: "1:64489762880:web:f55f26b068044f1320afa5"
         };
-      }
 
-      // Tampilkan desain dari Firestore
-      if (contestCode) {
-        const q = query(collection(db, 'submissions'), where('contestCode', '==', contestCode));
-        onSnapshot(q, (snapshot) => {
-          const gallery = document.getElementById('gallery');
-          gallery.innerHTML = '';
-          snapshot.docChanges().forEach((change) => {
-            const data = change.doc.data();
-            const img = document.createElement('img');
-            img.src = 'https://placehold.co/150x150/001f4d/ffffff?text=LOGO';
-            img.title = data.fileName;
-            const item = document.createElement('div');
-            item.className = 'gallery-item';
-            item.appendChild(img);
-            gallery.appendChild(item);
-          });
+        const app = firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+
+        async function upload() {
+            const file = document.getElementById('fileInput').files[0];
+            if (!file) return;
+
+            if (file.size > 300 * 1024) {
+                alert("File harus <300KB");
+                return;
+            }
+
+            const img = new Image();
+            img.src = URL.createObjectURL(file);
+            img.onload = async () => {
+                if (img.width !== 350 || img.height !== 280) {
+                    alert("Ukuran harus 350x280px");
+                    return;
+                }
+
+                await db.collection('submissions').add({
+                    fileName: file.name,
+                    driveLink: 'https://drive.google.com/file/d/ABC123/view',
+                    uploadedAt: new Date(),
+                    designerId: auth.currentUser.uid
+                });
+                alert("Upload berhasil ke Google Drive Anda!");
+            };
+        }
+
+        db.collection('submissions').onSnapshot(snapshot => {
+            const gallery = document.getElementById('gallery');
+            gallery.innerHTML = '';
+            snapshot.docChanges().forEach(change => {
+                const data = change.doc.data();
+                const img = document.createElement('img');
+                img.src = 'https://placehold.co/150x150/001f4d/ffffff?text=LOGO';
+                img.style.margin = '5px';
+                gallery.appendChild(img);
+            });
         });
-      }
     </script>
-
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
