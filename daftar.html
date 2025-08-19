@@ -2,42 +2,92 @@
 <html lang="id">
 <head>
     <title>Daftar - LogoVisualku</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
 </head>
 <body>
-    <form id="registerForm">
-        <input type="text" id="name" placeholder="Nama" required>
-        <input type="email" id="email" placeholder="Email" required>
-        <input type="password" id="password" placeholder="Password" required>
-        <select id="bank"><option>BCA</option><option>DANA</option></select>
-        <input type="text" id="account" placeholder="No Rekening" required>
-        <button type="submit">Daftar</button>
-    </form>
+    <div class="container py-5">
+        <div class="register-container">
+            <div class="logo text-center mb-4">
+                <h1>LogoVisualku</h1>
+                <p>Daftar sebagai Desainer</p>
+            </div>
+            <form id="registerForm">
+                <div class="mb-3">
+                    <label>Nama Lengkap</label>
+                    <input type="text" class="form-control" id="name" required>
+                </div>
+                <div class="mb-3">
+                    <label>Email</label>
+                    <input type="email" class="form-control" id="email" required>
+                </div>
+                <div class="mb-3">
+                    <label>Password</label>
+                    <input type="password" class="form-control" id="password" required>
+                </div>
+                <div class="mb-3">
+                    <label>Metode Penarikan</label>
+                    <select class="form-control" id="bank">
+                        <option value="bca">BCA</option>
+                        <option value="dana">DANA</option>
+                        <option value="bsi">BSI Syariah</option>
+                    </select>
+                </div>
+                <div class="mb-4">
+                    <label>Nomor Rekening / Akun</label>
+                    <input type="text" class="form-control" id="accountNumber" required>
+                </div>
+                <button type="submit" class="btn btn-primary w-100">Daftar Sekarang</button>
+            </form>
+            <div class="text-center mt-4">
+                <p>Sudah punya akun? <a href="login.html">Masuk di sini</a></p>
+                <p><a href="index.html">Kembali ke Beranda</a></p>
+            </div>
+        </div>
+    </div>
 
-    <script type="module">
-      import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
-      import { getAuth, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js";
-      import { getFirestore, addDoc } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js"></script>
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyBmoIXKp8BABwBMqKKXhSUBLGnYSnKNAYg",
+            authDomain: "logovisualku.firebaseapp.com",
+            projectId: "logovisualku",
+            storageBucket: "logovisualku.firebasestorage.app",
+            messagingSenderId: "64489762880",
+            appId: "1:64489762880:web:f55f26b068044f1320afa5"
+        };
 
-      const app = initializeApp(firebaseConfig);
-      const auth = getAuth(app);
-      const db = getFirestore(app);
+        const app = firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
 
-      document.getElementById('registerForm').addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const email = document.getElementById('email').value;
-        const password = document.getElementById('password').value;
-        const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-        await addDoc(collection(db, 'users'), {
-          uid: userCredential.user.uid,
-          name: document.getElementById('name').value,
-          email,
-          bank: document.getElementById('bank').value,
-          account: document.getElementById('account').value,
-          role: 'designer'
+        document.getElementById('registerForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const name = document.getElementById('name').value;
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const bank = document.getElementById('bank').value;
+            const accountNumber = document.getElementById('accountNumber').value;
+
+            try {
+                const userCredential = await auth.createUserWithEmailAndPassword(email, password);
+                await db.collection('users').add({
+                    uid: userCredential.user.uid,
+                    name,
+                    email,
+                    bank,
+                    accountNumber,
+                    role: 'designer',
+                    status: 'active',
+                    createdAt: new Date()
+                });
+                alert('Pendaftaran berhasil!');
+                window.location.href = 'kontes.html';
+            } catch (error) {
+                alert("Gagal daftar: " + error.message);
+            }
         });
-        alert("Daftar berhasil!");
-        window.location.href = 'kontes.html';
-      });
     </script>
 </body>
 </html>
