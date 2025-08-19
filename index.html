@@ -19,6 +19,7 @@
             color: #1a1a1a;
         }
 
+        /* Navbar */
         .navbar {
             background: white;
             box-shadow: 0 2px 20px rgba(0, 0, 0, 0.1);
@@ -36,6 +37,7 @@
             margin: 0 10px;
         }
 
+        /* Hero Section */
         .hero {
             min-height: 85vh;
             display: flex;
@@ -90,6 +92,7 @@
             box-shadow: 0 6px 20px rgba(0, 31, 77, 0.3);
         }
 
+        /* Footer */
         footer {
             background: #001f4d;
             color: #ddd;
@@ -160,7 +163,7 @@
                 </div>
                 <div class="col-lg-3 col-md-4 mb-4">
                     <h6>Kontak</h6>
-                    <p><i class="fas fa-whatsapp me-2"></i> 0851-8308-910</p>
+                    <p><i class="fas fa-mobile me-2"></i> 0851-8308-910</p>
                     <p><i class="fas fa-envelope me-2"></i> reneingrid@gmail.com</p>
                 </div>
                 <div class="col-lg-3 col-md-4">
@@ -176,9 +179,9 @@
         </div>
     </footer>
 
-    <!-- Firebase: Initialize App -->
+    <!-- Firebase SDK -->
     <script type="module">
-      // Import the Firebase modules
+      // Import Firebase
       import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
       import { getAuth } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js";
       import { getFirestore } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
@@ -198,7 +201,7 @@
       const auth = getAuth(app);
       const db = getFirestore(app);
 
-      // Now you can use auth and db in your app
+      // Sekarang Anda bisa gunakan auth & db di seluruh website
       console.log("Firebase Initialized");
     </script>
 
