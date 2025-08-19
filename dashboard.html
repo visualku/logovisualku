@@ -1,299 +1,76 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard Admin - LogoVisualku</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: 'Segoe UI', sans-serif;
-        }
-
-        body {
-            background-color: #f8f9fa;
-            color: #1a1a1a;
-        }
-
-        .navbar {
-            background: white;
-            box-shadow: 0 2px 20px rgba(0, 0, 0, 0.1);
-            padding: 1rem 0;
-        }
-
-        .navbar-brand {
-            font-weight: 700;
-            color: #001f4d !important;
-        }
-
-        .sidebar {
-            min-height: 100vh;
-            background: #001f4d;
-            color: white;
-            padding: 20px 0;
-        }
-
-        .sidebar a {
-            color: #a0d8ff;
-            text-decoration: none;
-            padding: 12px 20px;
-            display: block;
-        }
-
-        .sidebar a:hover, .sidebar a.active {
-            background: #001533;
-            color: white;
-        }
-
-        .card {
-            border-radius: 16px;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
-            margin-bottom: 20px;
-        }
-
-        .btn-primary {
-            background-color: #001f4d;
-            border: none;
-            padding: 10px 25px;
-            border-radius: 50px;
-            font-weight: 600;
-        }
-
-        footer {
-            background: #001f4d;
-            color: #ddd;
-            padding: 60px 0 30px;
-            margin-top: 80px;
-        }
-
-        .tab-content {
-            padding: 20px;
-            background: white;
-            border-radius: 12px;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
-        }
-
-        .form-control {
-            border: 1px solid #ddd;
-        }
-    </style>
+    <title>Dashboard - LogoVisualku</title>
 </head>
 <body>
-    <!-- Navbar -->
-    <nav class="navbar navbar-expand-lg navbar-light">
-        <div class="container">
-            <a class="navbar-brand" href="index.html">
-                <i class="fas fa-trophy me-2"></i>LogoVisualku
-            </a>
-            <div class="ms-auto">
-                <button id="logoutBtn" class="btn btn-outline-primary btn-sm">Keluar</button>
-            </div>
-        </div>
-    </nav>
-
-    <div class="container-fluid py-5">
-        <div class="row">
-            <!-- Sidebar -->
-            <div class="col-lg-3">
-                <div class="sidebar">
-                    <h5 class="px-4 pb-3 border-bottom">Dashboard</h5>
-                    <a href="#kontes-saya" class="active" onclick="showTab('kontes-saya')">Kontes Saya</a>
-                    <a href="#verifikasi" onclick="showTab('verifikasi')">Verifikasi Pembayaran</a>
-                    <a href="#semua-kontes" onclick="showTab('semua-kontes')">Semua Kontes</a>
-                    <a href="#chat" onclick="showTab('chat')">Chat dengan Desainer</a>
-                </div>
-            </div>
-
-            <!-- Main Content -->
-            <div class="col-lg-9">
-                <!-- Tab: Kontes Saya -->
-                <div id="kontes-saya" class="tab-content">
-                    <h4>Kontes Saya</h4>
-                    <p>Anda belum membuat kontes.</p>
-                </div>
-
-                <!-- Tab: Verifikasi Pembayaran -->
-                <div id="verifikasi" class="tab-content" style="display: none;">
-                    <h4>Verifikasi Pembayaran</h4>
-                    <div class="card">
-                        <div class="card-body">
-                            <p><strong>Masukkan Kode Kontes (10 digit):</strong></p>
-                            <input type="text" id="codeInput" placeholder="1008257382" class="form-control mb-3" style="max-width: 300px;">
-                            <button class="btn btn-primary" onclick="verifyPayment()">Cek Kode</button>
-                        </div>
-                    </div>
-                    <div id="verificationResult"></div>
-                </div>
-
-                <!-- Tab: Semua Kontes -->
-                <div id="semua-kontes" class="tab-content" style="display: none;">
-                    <h4>Semua Kontes</h4>
-                    <div id="allContestsList">
-                        <p>Memuat daftar kontes...</p>
-                    </div>
-                </div>
-
-                <!-- Tab: Chat -->
-                <div id="chat" class="tab-content" style="display: none;">
-                    <h4>Chat dengan Desainer</h4>
-                    <p>Saat ini tidak ada percakapan aktif.</p>
-                </div>
-            </div>
-        </div>
+    <div id="adminPanel" style="display:none;">
+        <h3>Admin Panel</h3>
+        <input type="text" id="codeInput" placeholder="Kode Kontes">
+        <button onclick="verify()">Verifikasi</button>
+        <div id="result"></div>
+    </div>
+    <div id="chPanel" style="display:none;">
+        <h3>Kontes Saya</h3>
+        <a href="buat-kontes.html">Buat Kontes Baru</a>
+    </div>
+    <div id="designerPanel" style="display:none;">
+        <h3>Kontes yang Diikuti</h3>
+        <a href="kontes.html">Lihat Kontes Aktif</a>
     </div>
 
-    <!-- Footer -->
-    <footer>
-        <div class="container">
-            <div class="text-center">
-                <p>&copy; 2024 LogoVisualku. Semua hak cipta dilindungi.</p>
-            </div>
-        </div>
-    </footer>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js"></script>
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyBmoIXKp8BABwBMqKKXhSUBLGnYSnKNAYg",
+            authDomain: "logovisualku.firebaseapp.com",
+            projectId: "logovisualku",
+            storageBucket: "logovisualku.firebasestorage.app",
+            messagingSenderId: "64489762880",
+            appId: "1:64489762880:web:f55f26b068044f1320afa5"
+        };
 
-    <!-- Firebase SDK -->
-    <script type="module">
-      // Import Firebase
-      import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
-      import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js";
-      import { getFirestore, collection, query, where, getDocs, updateDoc } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
+        const app = firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
 
-      // Your web app's Firebase configuration
-      const firebaseConfig = {
-        apiKey: "AIzaSyBmoIXKp8BABwBMqKKXhSUBLGnYSnKNAYg",
-        authDomain: "logovisualku.firebaseapp.com",
-        projectId: "logovisualku",
-        storageBucket: "logovisualku.firebasestorage.app",
-        messagingSenderId: "64489762880",
-        appId: "1:64489762880:web:f55f26b068044f1320afa5"
-      };
-
-      // Initialize Firebase
-      const app = initializeApp(firebaseConfig);
-      const auth = getAuth(app);
-      const db = getFirestore(app);
-
-      // Cek login
-      onAuthStateChanged(auth, (user) => {
-        if (!user) {
-          window.location.href = 'login.html';
-        }
-      });
-
-      // Logout
-      document.getElementById('logoutBtn').addEventListener('click', () => {
-        signOut(auth).then(() => {
-          window.location.href = 'index.html';
-        }).catch((error) => {
-          alert("Gagal keluar: " + error.message);
+        auth.onAuthStateChanged(async (user) => {
+            if (user) {
+                if (user.email === "admin@visualku.com") {
+                    document.getElementById('adminPanel').style.display = 'block';
+                } else {
+                    const snapshot = await db.collection('users').where('uid', '==', user.uid).get();
+                    if (!snapshot.empty) {
+                        const role = snapshot.docs[0].data().role;
+                        document.getElementById(`${role}Panel`).style.display = 'block';
+                    }
+                }
+            } else {
+                window.location.href = 'login.html';
+            }
         });
-      });
 
-      // Tab Navigation
-      function showTab(tabId) {
-        document.querySelectorAll('.tab-content').forEach(tab => {
-          tab.style.display = 'none';
-        });
-        document.getElementById(tabId).style.display = 'block';
+        window.verify = async () => {
+            const code = document.getElementById('codeInput').value;
+            const snapshot = await db.collection('contests').where('contestCode', '==', code).get();
+            const result = document.getElementById('result');
+            if (!snapshot.empty) {
+                const doc = snapshot.docs[0];
+                result.innerHTML = `<p>Kontes ditemukan: ${doc.data().businessName}. <button onclick="start('${doc.id}')">Mulai Kontes</button></p>`;
+            } else {
+                result.innerHTML = '<p>Kode tidak ditemukan</p>';
+            }
+        };
 
-        // Muat data jika tab diakses
-        if (tabId === 'semua-kontes') {
-          loadAllContests();
-        }
-      }
-
-      // Verifikasi Pembayaran
-      window.verifyPayment = async () => {
-        const code = document.getElementById('codeInput').value.trim();
-        if (!code) {
-          alert("Masukkan kode kontes");
-          return;
-        }
-
-        const q = query(collection(db, 'contests'), where('contestCode', '==', code));
-        const querySnapshot = await getDocs(q);
-        const resultDiv = document.getElementById('verificationResult');
-
-        if (!querySnapshot.empty) {
-          const doc = querySnapshot.docs[0];
-          const data = doc.data();
-          resultDiv.innerHTML = `
-            <div class="card mt-3">
-              <div class="card-body">
-                <h5>Detail Kontes</h5>
-                <p><strong>Nama Bisnis:</strong> ${data.businessName}</p>
-                <p><strong>Deskripsi:</strong> ${data.description}</p>
-                <p><strong>Gaya:</strong> ${data.style || '-'}</p>
-                <p><strong>Warna:</strong> ${data.color || '-'}</p>
-                <p><strong>Paket:</strong> ${data.package}</p>
-                <p><strong>Hadiah:</strong> Rp ${data.prize.toLocaleString()}</p>
-                <p><strong>Status:</strong> <span style="color: ${data.status === 'active' ? 'green' : 'orange'};">${data.status}</span></p>
-                <button class="btn btn-primary" onclick="startContest('${doc.id}')">Mulai Kontes</button>
-              </div>
-            </div>
-          `;
-        } else {
-          resultDiv.innerHTML = '<div class="alert alert-danger mt-3">Kode kontes tidak ditemukan</div>';
-        }
-      };
-
-      // Mulai Kontes
-      window.startContest = async (docId) => {
-        const q = query(collection(db, 'contests'), where('__name__', '==', docId));
-        const querySnapshot = await getDocs(q);
-        if (!querySnapshot.empty) {
-          const docRef = querySnapshot.docs[0].ref;
-          await updateDoc(docRef, { status: 'active', startedAt: new Date() });
-          alert('Kontes berhasil dimulai! Desainer sekarang bisa upload desain.');
-          document.getElementById('verificationResult').innerHTML = '';
-          document.getElementById('codeInput').value = '';
-        }
-      };
-
-      // Muat Semua Kontes
-      window.loadAllContests = async () => {
-        const listDiv = document.getElementById('allContestsList');
-        listDiv.innerHTML = '<p>Memuat kontes...</p>';
-        
-        try {
-          const q = query(collection(db, 'contests'));
-          const querySnapshot = await getDocs(q);
-          
-          if (querySnapshot.empty) {
-            listDiv.innerHTML = '<p>Tidak ada kontes saat ini.</p>';
-            return;
-          }
-
-          let html = '<div class="row g-3">';
-          querySnapshot.forEach((doc) => {
-            const data = doc.data();
-            html += `
-              <div class="col-md-6">
-                <div class="card">
-                  <div class="card-body">
-                    <h6>${data.businessName}</h6>
-                    <p class="text-muted">${data.description.substring(0, 80)}...</p>
-                    <div class="d-flex justify-content-between">
-                      <span>Rp ${data.prize.toLocaleString()}</span>
-                      <span class="badge bg-${data.status === 'active' ? 'success' : 'warning'}">${data.status}</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            `;
-          });
-          html += '</div>';
-          listDiv.innerHTML = html;
-        } catch (error) {
-          listDiv.innerHTML = `<p>Error: ${error.message}</p>`;
-        }
-      };
+        window.start = async (id) => {
+            const snapshot = await db.collection('contests').where('__name__', '==', id).get();
+            if (!snapshot.empty) {
+                await snapshot.docs[0].ref.update({ status: 'active' });
+                alert('Kontes dimulai!');
+            }
+        };
     </script>
-
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
