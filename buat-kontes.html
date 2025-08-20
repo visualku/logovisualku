@@ -68,10 +68,12 @@
         </div>
     </div>
 
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js"></script>
+    <!-- Firebase SDK (Global Version) -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
     <script>
+        // Your web app's Firebase configuration
         const firebaseConfig = {
             apiKey: "AIzaSyBmoIXKp8BABwBMqKKXhSUBLGnYSnKNAYg",
             authDomain: "logovisualku.firebaseapp.com",
@@ -81,10 +83,12 @@
             appId: "1:64489762880:web:f55f26b068044f1320afa5"
         };
 
+        // Initialize Firebase
         const app = firebase.initializeApp(firebaseConfig);
         const auth = firebase.auth();
         const db = firebase.firestore();
 
+        // Pilih Paket
         document.querySelectorAll('.package-card').forEach(card => {
             card.addEventListener('click', () => {
                 document.querySelectorAll('.package-card').forEach(c => c.classList.remove('selected'));
@@ -94,6 +98,7 @@
             });
         });
 
+        // Generate Kode 10 Digit
         function generateCode() {
             const now = new Date();
             const date = String(now.getDate()).padStart(2, '0');
@@ -103,6 +108,7 @@
             return `${date}${month}${year}${random}`;
         }
 
+        // Submit Form
         document.getElementById('contestForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             const form = e.target;
