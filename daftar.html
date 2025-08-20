@@ -5,10 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Daftar - LogoVisualku</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
-        body { background-color: #ffffff; color: #1a1a1a; }
+        body { background: #ffffff; color: #1a1a1a; }
         .navbar { background: white; box-shadow: 0 2px 20px rgba(0, 0, 0, 0.1); padding: 1rem 0; }
         .navbar-brand { font-weight: 700; color: #001f4d !important; font-size: 1.5rem; }
         .register-container { max-width: 500px; margin: 80px auto; padding: 40px; background: white; border-radius: 16px; box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1); }
@@ -60,11 +59,12 @@
         </div>
     </div>
 
-    <!-- Firebase SDK -->
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js"></script>
+    <!-- Firebase SDK (Global Version - Compat) -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
     <script>
+        // Your web app's Firebase configuration
         const firebaseConfig = {
             apiKey: "AIzaSyBmoIXKp8BABwBMqKKXhSUBLGnYSnKNAYg",
             authDomain: "logovisualku.firebaseapp.com",
@@ -74,10 +74,12 @@
             appId: "1:64489762880:web:f55f26b068044f1320afa5"
         };
 
+        // Initialize Firebase
         const app = firebase.initializeApp(firebaseConfig);
         const auth = firebase.auth();
         const db = firebase.firestore();
 
+        // Handle Register
         document.getElementById('registerForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             const name = document.getElementById('name').value;
@@ -87,21 +89,28 @@
             const accountNumber = document.getElementById('accountNumber').value;
 
             try {
+                // 1. Buat akun di Firebase Auth
                 const userCredential = await auth.createUserWithEmailAndPassword(email, password);
+                const user = userCredential.user;
+
+                // 2. Simpan data ke Firestore
                 await db.collection('users').add({
-                    uid: userCredential.user.uid,
-                    name,
-                    email,
-                    bank,
-                    accountNumber,
+                    uid: user.uid,
+                    name: name,
+                    email: email,
+                    bank: bank,
+                    accountNumber: accountNumber,
                     role: 'designer',
                     status: 'active',
                     createdAt: new Date()
                 });
-                alert('Pendaftaran berhasil!');
+
+                alert('Pendaftaran berhasil! Anda sekarang bisa login.');
                 window.location.href = 'kontes.html';
+
             } catch (error) {
                 alert("Gagal daftar: " + error.message);
+                console.error("Error:", error);
             }
         });
     </script>
