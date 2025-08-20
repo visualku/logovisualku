@@ -40,6 +40,9 @@
                     <li class="nav-item">
                         <a class="nav-link" href="kontes.html">Kontes Aktif</a>
                     </li>
+                    <li class="nav-item" id="profileBtnContainer" style="display:none;">
+                        <a class="nav-link" href="dashboard.html">Profil</a>
+                    </li>
                     <li class="nav-item">
                         <button class="btn btn-outline-primary btn-sm ms-2" id="loginBtn">Masuk</button>
                     </li>
@@ -125,24 +128,62 @@
       const app = initializeApp(firebaseConfig);
       const auth = getAuth(app);
 
-      // Update Login Button
+      // Get DOM elements
       const loginBtn = document.getElementById('loginBtn');
-      
-      onAuthStateChanged(auth, (user) => {
-        if (user) {
+      const profileBtnContainer = document.getElementById('profileBtnContainer');
+
+      // Check if user is logged in (Firebase Auth)
+      function checkFirebaseAuth() {
+        onAuthStateChanged(auth, (user) => {
+          if (user) {
+            // User is signed in
+            loginBtn.textContent = 'Keluar';
+            loginBtn.onclick = () => {
+              signOut(auth).then(() => {
+                window.location.href = 'index.html';
+              });
+            };
+            
+            // Show profile button
+            profileBtnContainer.style.display = 'block';
+          } else {
+            // User is signed out
+            checkCHLogin();
+          }
+        });
+      }
+
+      // Check if CH is logged in (sessionStorage)
+      function checkCHLogin() {
+        const chLoggedIn = sessionStorage.getItem('chLoggedIn');
+        const chContestCode = sessionStorage.getItem('chContestCode');
+        
+        if (chLoggedIn && chContestCode) {
           loginBtn.textContent = 'Keluar';
           loginBtn.onclick = () => {
-            signOut(auth).then(() => {
-              window.location.href = 'index.html';
-            });
+            sessionStorage.clear();
+            window.location.href = 'index.html';
           };
+          
+          // Show profile button
+          profileBtnContainer.style.display = 'block';
         } else {
+          // No user is logged in
           loginBtn.textContent = 'Masuk';
           loginBtn.onclick = () => {
             window.location.href = 'login.html';
           };
+          
+          // Hide profile button
+          profileBtnContainer.style.display = 'none';
         }
-      });
+      }
+
+      // Initialize login state check
+      checkFirebaseAuth();
+      
+      // Also check CH login state on page load
+      checkCHLogin();
 
       // CH Login
       document.getElementById('chLoginBtn').addEventListener('click', () => {
