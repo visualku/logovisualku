@@ -183,3 +183,156 @@
           // Load contest details
           loadContestDetails(contestCode);
           
+          // Load existing designs
+          loadDesignGallery(contestCode);
+        });
+      }
+
+      // Load Contest Details
+      async function loadContestDetails(code) {
+        const detailsContainer = document.getElementById('contestDetails');
+        detailsContainer.innerHTML = '<p class="text-center py-4">Memuat detail kontes...</p>';
+        
+        try {
+          const contestsQuery = query(collection(db, 'contests'), where('contestCode', '==', code));
+          const contestSnapshot = await getDocs(contestsQuery);
+          
+          if (contestSnapshot.empty) {
+            detailsContainer.innerHTML = `
+              <div class="alert alert-danger">
+                Kontes dengan kode ${code} tidak ditemukan.
+              </div>
+            `;
+            return;
+          }
+          
+          const data = contestSnapshot.docs[0].data();
+          detailsContainer.innerHTML = `
+            <div class="card-body">
+              <h4 class="card-title">${data.businessName}</h4>
+              <p class="card-text">${data.description}</p>
+              <div class="row">
+                <div class="col-md-6 mb-3">
+                  <strong>Gaya Logo:</strong> ${data.style || 'Tidak disebutkan'}
+                </div>
+                <div class="col-md-6 mb-3">
+                  <strong>Warna:</strong> ${data.color || 'Tidak disebutkan'}
+                </div>
+                <div class="col-md-6 mb-3">
+                  <strong>Paket:</strong> ${data.package.toUpperCase()}
+                </div>
+                <div class="col-md-6 mb-3">
+                  <strong>Hadiah:</strong> Rp ${data.prize.toLocaleString()}
+                </div>
+              </div>
+            </div>
+          `;
+        } catch (error) {
+          detailsContainer.innerHTML = `
+            <div class="alert alert-danger">
+              Gagal memuat detail kontes: ${error.message}
+            </div>
+          `;
+        }
+      }
+
+      // Load Design Gallery
+      async function loadDesignGallery(code) {
+        const gallery = document.getElementById('designGallery');
+        gallery.innerHTML = '<p class="text-center py-4">Memuat desain...</p>';
+        
+        try {
+          const submissionsQuery = query(
+            collection(db, 'submissions'), 
+            where('contestCode', '==', code),
+            orderBy('uploadedAt', 'desc')
+          );
+          const submissionsSnapshot = await getDocs(submissionsQuery);
+          
+          if (submissionsSnapshot.empty) {
+            gallery.innerHTML = '<p class="text-center py-4">Belum ada desain yang diupload.</p>';
+            return;
+          }
+          
+          gallery.innerHTML = '';
+          submissionsSnapshot.forEach(doc => {
+            const data = doc.data();
+            const img = document.createElement('img');
+            img.src = 'https://placehold.co/150x150/001f4d/ffffff?text=LOGO';
+            img.style.margin = '5px';
+            img.style.borderRadius = '10px';
+            img.title = `Diupload oleh: ${data.designerName || 'Desainer'}`;
+            gallery.appendChild(img);
+          });
+        } catch (error) {
+          gallery.innerHTML = `
+            <div class="alert alert-danger">
+              Gagal memuat galeri desain: ${error.message}
+            </div>
+          `;
+        }
+      }
+
+      // Upload Design
+      async function uploadDesign() {
+        const fileInput = document.getElementById('fileInput');
+        const file = fileInput.files[0];
+        const status = document.getElementById('uploadStatus');
+        
+        if (!file) {
+          status.innerHTML = '<div class="alert alert-warning">Pilih file terlebih dahulu</div>';
+          return;
+        }
+        
+        // Check file size (max 300KB)
+        if (file.size > 300 * 1024) {
+          status.innerHTML = '<div class="alert alert-danger">Ukuran file harus kurang dari 300KB</div>';
+          return;
+        }
+        
+        // Check image dimensions
+        const img = new Image();
+        img.src = URL.createObjectURL(file);
+        
+        img.onload = async function() {
+          if (img.width !== 350 || img.height !== 280) {
+            status.innerHTML = '<div class="alert alert-danger">Ukuran gambar harus 350x280px</div>';
+            return;
+          }
+          
+          try {
+            const user = auth.currentUser;
+            const usersQuery = query(collection(db, 'users'), where('uid', '==', user.uid));
+            const userSnapshot = await getDocs(usersQuery);
+            const userData = userSnapshot.docs[0].data();
+            
+            // Save submission to Firestore
+            await addDoc(collection(db, 'submissions'), {
+              contestCode: contestCode,
+              designerId: user.uid,
+              designerName: userData.name,
+              fileName: file.name,
+              driveLink: 'https://drive.google.com/file/d/ABC123/view',
+              uploadedAt: new Date()
+            });
+            
+            status.innerHTML = '<div class="alert alert-success">Desain berhasil diupload! Silakan upload ke Google Drive Anda.</div>';
+            
+            // Refresh gallery
+            setTimeout(() => {
+              loadDesignGallery(contestCode);
+              fileInput.value = '';
+            }, 1500);
+          } catch (error) {
+            status.innerHTML = `<div class="alert alert-danger">Gagal upload: ${error.message}</div>`;
+          }
+        };
+        
+        img.onerror = function() {
+          status.innerHTML = '<div class="alert alert-danger">File yang dipilih bukan gambar yang valid</div>';
+        };
+      }
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
