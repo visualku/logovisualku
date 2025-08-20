@@ -6,12 +6,12 @@
     <title>Daftar - LogoVisualku</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
-        body { background: #ffffff; color: #1a1a1a; }
-        .navbar { background: white; box-shadow: 0 2px 20px rgba(0, 0, 0, 0.1); padding: 1rem 0; }
-        .navbar-brand { font-weight: 700; color: #001f4d !important; font-size: 1.5rem; }
-        .register-container { max-width: 500px; margin: 80px auto; padding: 40px; background: white; border-radius: 16px; box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1); }
-        .btn-primary { background-color: #001f4d; border: none; padding: 12px 30px; border-radius: 50px; font-weight: 600; width: 100%; }
+        * { margin:0; padding:0; box-sizing:border-box; font-family:'Segoe UI',sans-serif; }
+        body { background:#ffffff; color:#1a1a1a; }
+        .navbar { background:white; box-shadow:0 2px 20px rgba(0,0,0,0.1); padding:1rem 0; }
+        .navbar-brand { font-weight:700; color:#001f4d !important; font-size:1.5rem; }
+        .register-container { max-width:500px; margin:80px auto; padding:40px; background:white; border-radius:16px; box-shadow:0 5px 20px rgba(0,0,0,0.1); }
+        .btn-primary { background:#001f4d; border:none; padding:12px 30px; border-radius:50px; font-weight:600; width:100%; }
     </style>
 </head>
 <body>
@@ -59,60 +59,51 @@
         </div>
     </div>
 
-    <!-- Firebase SDK (Global Version - Compat) -->
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
-    <script>
-        // Your web app's Firebase configuration
-        const firebaseConfig = {
-            apiKey: "AIzaSyBmoIXKp8BABwBMqKKXhSUBLGnYSnKNAYg",
-            authDomain: "logovisualku.firebaseapp.com",
-            projectId: "logovisualku",
-            storageBucket: "logovisualku.firebasestorage.app",
-            messagingSenderId: "64489762880",
-            appId: "1:64489762880:web:f55f26b068044f1320afa5"
-        };
+    <!-- Firebase SDK (Modular) -->
+    <script type="module">
+      import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
+      import { getAuth, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js";
+      import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
 
-        // Initialize Firebase
-        const app = firebase.initializeApp(firebaseConfig);
-        const auth = firebase.auth();
-        const db = firebase.firestore();
+      const firebaseConfig = {
+        apiKey: "AIzaSyBmoIXKp8BABwBMqKKXhSUBLGnYSnKNAYg",
+        authDomain: "logovisualku.firebaseapp.com",
+        projectId: "logovisualku",
+        storageBucket: "logovisualku.firebasestorage.app",
+        messagingSenderId: "64489762880",
+        appId: "1:64489762880:web:f55f26b068044f1320afa5"
+      };
 
-        // Handle Register
-        document.getElementById('registerForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const name = document.getElementById('name').value;
-            const email = document.getElementById('email').value;
-            const password = document.getElementById('password').value;
-            const bank = document.getElementById('bank').value;
-            const accountNumber = document.getElementById('accountNumber').value;
+      const app = initializeApp(firebaseConfig);
+      const auth = getAuth(app);
+      const db = getFirestore(app);
 
-            try {
-                // 1. Buat akun di Firebase Auth
-                const userCredential = await auth.createUserWithEmailAndPassword(email, password);
-                const user = userCredential.user;
+      document.getElementById('registerForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const name = document.getElementById('name').value;
+        const email = document.getElementById('email').value;
+        const password = document.getElementById('password').value;
+        const bank = document.getElementById('bank').value;
+        const accountNumber = document.getElementById('accountNumber').value;
 
-                // 2. Simpan data ke Firestore
-                await db.collection('users').add({
-                    uid: user.uid,
-                    name: name,
-                    email: email,
-                    bank: bank,
-                    accountNumber: accountNumber,
-                    role: 'designer',
-                    status: 'active',
-                    createdAt: new Date()
-                });
-
-                alert('Pendaftaran berhasil! Anda sekarang bisa login.');
-                window.location.href = 'kontes.html';
-
-            } catch (error) {
-                alert("Gagal daftar: " + error.message);
-                console.error("Error:", error);
-            }
-        });
+        try {
+          const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+          await addDoc(collection(db, 'users'), {
+            uid: userCredential.user.uid,
+            name,
+            email,
+            bank,
+            accountNumber,
+            role: 'designer',
+            status: 'active',
+            createdAt: new Date()
+          });
+          alert('Pendaftaran berhasil!');
+          window.location.href = 'kontes.html';
+        } catch (error) {
+          alert("Gagal daftar: " + error.message);
+        }
+      });
     </script>
 </body>
 </html>
