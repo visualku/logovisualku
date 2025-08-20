@@ -96,16 +96,51 @@
       const db = getFirestore(app);
 
       // Pilih Paket
-      document.querySelectorAll('.package-card').forEach(card => {
-        card.addEventListener('click', () => {
-          document.querySelectorAll('.package-card').forEach(c => c.classList.remove('selected'));
-          card.classList.add('selected');
-          document.getElementById('packageInput').value = card.dataset.package;
-          document.getElementById('prizeInput').value = card.dataset.prize;
+      document.addEventListener('DOMContentLoaded', () => {
+        document.querySelectorAll('.package-card').forEach(card => {
+          card.addEventListener('click', () => {
+            document.querySelectorAll('.package-card').forEach(c => c.classList.remove('selected'));
+            card.classList.add('selected');
+            document.getElementById('packageInput').value = card.dataset.package;
+            document.getElementById('prizeInput').value = card.dataset.prize;
+          });
+        });
+
+        // Submit Form
+        document.getElementById('contestForm').addEventListener('submit', async (e) => {
+          e.preventDefault();
+          const form = e.target;
+          const package = form.package.value;
+          if (!package) return alert("Pilih paket");
+
+          const contestCode = generateCode();
+
+          await addDoc(collection(db, 'contests'), {
+            businessName: form.businessName.value,
+            description: form.description.value,
+            style: form.style.value,
+            color: form.color.value,
+            package,
+            prize: parseInt(form.prize.value),
+            contestCode,
+            whatsapp: form.whatsapp.value,
+            chPassword: form.chPassword.value,
+            status: 'pending',
+            createdAt: new Date()
+          });
+
+          // Kirim ke WhatsApp Anda (0851-8308-910)
+          const message = `*🆕 KONTES BARU DIBUAT*%0A%0A*Nama Bisnis:* ${encodeURIComponent(form.businessName.value)}%0A*Deskripsi:* ${encodeURIComponent(form.description.value)}%0A*Paket:* ${package.toUpperCase()}%0A*Hadiah:* Rp ${parseInt(form.prize.value).toLocaleString()}%0A*Kode Kontes:* ${contestCode}%0A*No HP CH:* ${form.whatsapp.value}%0A%0AStatus: *Pending (Belum Bayar)*`;
+          const whatsappLink = `https://wa.me/6285183089108?text=${message}`;
+          window.open(whatsappLink, '_blank');
+
+          // Tampilkan hasil
+          document.getElementById('contestForm').style.display = 'none';
+          document.getElementById('contestCode').textContent = contestCode;
+          document.getElementById('successMessage').style.display = 'block';
         });
       });
 
-      // Generate Kode 10 Digit
       function generateCode() {
         const now = new Date();
         const date = String(now.getDate()).padStart(2, '0');
@@ -114,40 +149,6 @@
         const random = Math.floor(1000 + Math.random() * 9000);
         return `${date}${month}${year}${random}`;
       }
-
-      // Submit Form
-      document.getElementById('contestForm').addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const form = e.target;
-        const package = form.package.value;
-        if (!package) return alert("Pilih paket");
-
-        const contestCode = generateCode();
-
-        await addDoc(collection(db, 'contests'), {
-          businessName: form.businessName.value,
-          description: form.description.value,
-          style: form.style.value,
-          color: form.color.value,
-          package,
-          prize: parseInt(form.prize.value),
-          contestCode,
-          whatsapp: form.whatsapp.value,
-          chPassword: form.chPassword.value,
-          status: 'pending',
-          createdAt: new Date()
-        });
-
-        // Kirim ke WhatsApp Anda (0851-8606-8910)
-        const message = `*🆕 KONTES BARU DIBUAT*%0A%0A*Nama Bisnis:* ${encodeURIComponent(form.businessName.value)}%0A*Deskripsi:* ${encodeURIComponent(form.description.value)}%0A*Paket:* ${package.toUpperCase()}%0A*Hadiah:* Rp ${parseInt(form.prize.value).toLocaleString()}%0A*Kode Kontes:* ${contestCode}%0A*No HP CH:* ${form.whatsapp.value}%0A%0AStatus: *Pending (Belum Bayar)*`;
-        const whatsappLink = `https://wa.me/6285186068910?text=${message}`;
-        window.open(whatsappLink, '_blank');
-
-        // Tampilkan hasil
-        document.getElementById('contestForm').style.display = 'none';
-        document.getElementById('contestCode').textContent = contestCode;
-        document.getElementById('successMessage').style.display = 'block';
-      });
     </script>
 </body>
 </html>
