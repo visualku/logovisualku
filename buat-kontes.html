@@ -32,6 +32,14 @@
                 <label>Warna Favorit</label>
                 <input type="text" class="form-control" name="color" placeholder="Merah & kuning, biru, dll">
             </div>
+            <div class="mb-3">
+                <label>Nomor WhatsApp (untuk notifikasi)</label>
+                <input type="text" class="form-control" name="whatsapp" required>
+            </div>
+            <div class="mb-4">
+                <label>Buat Password (untuk login nanti)</label>
+                <input type="password" class="form-control" name="chPassword" required>
+            </div>
 
             <h4>Pilih Paket Hadiah</h4>
             <div class="row g-4 mt-2">
@@ -68,72 +76,78 @@
         </div>
     </div>
 
-    <!-- Firebase SDK (Global Version) -->
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
-    <script>
-        // Your web app's Firebase configuration
-        const firebaseConfig = {
-            apiKey: "AIzaSyBmoIXKp8BABwBMqKKXhSUBLGnYSnKNAYg",
-            authDomain: "logovisualku.firebaseapp.com",
-            projectId: "logovisualku",
-            storageBucket: "logovisualku.firebasestorage.app",
-            messagingSenderId: "64489762880",
-            appId: "1:64489762880:web:f55f26b068044f1320afa5"
-        };
+    <!-- Firebase SDK (Modular) -->
+    <script type="module">
+      import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
+      import { getAuth } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js";
+      import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
 
-        // Initialize Firebase
-        const app = firebase.initializeApp(firebaseConfig);
-        const auth = firebase.auth();
-        const db = firebase.firestore();
+      const firebaseConfig = {
+        apiKey: "AIzaSyBmoIXKp8BABwBMqKKXhSUBLGnYSnKNAYg",
+        authDomain: "logovisualku.firebaseapp.com",
+        projectId: "logovisualku",
+        storageBucket: "logovisualku.firebasestorage.app",
+        messagingSenderId: "64489762880",
+        appId: "1:64489762880:web:f55f26b068044f1320afa5"
+      };
 
-        // Pilih Paket
-        document.querySelectorAll('.package-card').forEach(card => {
-            card.addEventListener('click', () => {
-                document.querySelectorAll('.package-card').forEach(c => c.classList.remove('selected'));
-                card.classList.add('selected');
-                document.getElementById('packageInput').value = card.dataset.package;
-                document.getElementById('prizeInput').value = card.dataset.prize;
-            });
+      const app = initializeApp(firebaseConfig);
+      const auth = getAuth(app);
+      const db = getFirestore(app);
+
+      // Pilih Paket
+      document.querySelectorAll('.package-card').forEach(card => {
+        card.addEventListener('click', () => {
+          document.querySelectorAll('.package-card').forEach(c => c.classList.remove('selected'));
+          card.classList.add('selected');
+          document.getElementById('packageInput').value = card.dataset.package;
+          document.getElementById('prizeInput').value = card.dataset.prize;
+        });
+      });
+
+      // Generate Kode 10 Digit
+      function generateCode() {
+        const now = new Date();
+        const date = String(now.getDate()).padStart(2, '0');
+        const month = String(now.getMonth() + 1).padStart(2, '0');
+        const year = String(now.getFullYear()).slice(-2);
+        const random = Math.floor(1000 + Math.random() * 9000);
+        return `${date}${month}${year}${random}`;
+      }
+
+      // Submit Form
+      document.getElementById('contestForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const form = e.target;
+        const package = form.package.value;
+        if (!package) return alert("Pilih paket");
+
+        const contestCode = generateCode();
+
+        await addDoc(collection(db, 'contests'), {
+          businessName: form.businessName.value,
+          description: form.description.value,
+          style: form.style.value,
+          color: form.color.value,
+          package,
+          prize: parseInt(form.prize.value),
+          contestCode,
+          whatsapp: form.whatsapp.value,
+          chPassword: form.chPassword.value,
+          status: 'pending',
+          createdAt: new Date()
         });
 
-        // Generate Kode 10 Digit
-        function generateCode() {
-            const now = new Date();
-            const date = String(now.getDate()).padStart(2, '0');
-            const month = String(now.getMonth() + 1).padStart(2, '0');
-            const year = String(now.getFullYear()).slice(-2);
-            const random = Math.floor(1000 + Math.random() * 9000);
-            return `${date}${month}${year}${random}`;
-        }
+        // Kirim ke WhatsApp Anda (0851-8606-8910)
+        const message = `*🆕 KONTES BARU DIBUAT*%0A%0A*Nama Bisnis:* ${encodeURIComponent(form.businessName.value)}%0A*Deskripsi:* ${encodeURIComponent(form.description.value)}%0A*Paket:* ${package.toUpperCase()}%0A*Hadiah:* Rp ${parseInt(form.prize.value).toLocaleString()}%0A*Kode Kontes:* ${contestCode}%0A*No HP CH:* ${form.whatsapp.value}%0A%0AStatus: *Pending (Belum Bayar)*`;
+        const whatsappLink = `https://wa.me/6285186068910?text=${message}`;
+        window.open(whatsappLink, '_blank');
 
-        // Submit Form
-        document.getElementById('contestForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const form = e.target;
-            const package = form.package.value;
-            if (!package) return alert("Pilih paket");
-
-            const contestCode = generateCode();
-
-            await db.collection('contests').add({
-                businessName: form.businessName.value,
-                description: form.description.value,
-                style: form.style.value,
-                color: form.color.value,
-                package,
-                prize: parseInt(form.prize.value),
-                contestCode,
-                status: 'pending',
-                createdAt: new Date()
-            });
-
-            document.getElementById('contestForm').style.display = 'none';
-            document.getElementById('contestCode').textContent = contestCode;
-            document.getElementById('successMessage').style.display = 'block';
-        });
+        // Tampilkan hasil
+        document.getElementById('contestForm').style.display = 'none';
+        document.getElementById('contestCode').textContent = contestCode;
+        document.getElementById('successMessage').style.display = 'block';
+      });
     </script>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
