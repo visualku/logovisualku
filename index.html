@@ -19,13 +19,14 @@
         .btn-primary { background: #001f4d; color: white; border: none; border-radius: 50px; padding: 14px 35px; font-weight: 600; }
         footer { background: #001f4d; color: #ddd; padding: 60px 0 30px; }
         footer a { color: #a0d8ff; text-decoration: none; }
+        .ch-login-card { max-width: 500px; margin: 40px auto; padding: 30px; background: white; border-radius: 16px; box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1); }
     </style>
 </head>
 <body>
-    <!-- Navbar -->
+    <!-- HEADER -->
     <nav class="navbar navbar-expand-lg navbar-light sticky-top">
         <div class="container">
-            <a class="navbar-brand" href="#">
+            <a class="navbar-brand" href="index.html">
                 <i class="fas fa-trophy me-2"></i>LogoVisualku
             </a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
@@ -34,13 +35,13 @@
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav ms-auto">
                     <li class="nav-item">
-                        <a class="nav-link active" href="#">Beranda</a>
+                        <a class="nav-link active" href="index.html">Beranda</a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link" href="kontes.html">Kontes Aktif</a>
                     </li>
                     <li class="nav-item">
-                        <button class="btn btn-outline-primary btn-sm ms-2" onclick="window.location.href='login.html'">Masuk</button>
+                        <button class="btn btn-outline-primary btn-sm ms-2" onclick="toggleLogin()">Masuk</button>
                     </li>
                 </ul>
             </div>
@@ -56,7 +57,22 @@
         </div>
     </section>
 
-    <!-- Footer -->
+    <!-- CH Login Section -->
+    <div class="container py-5">
+        <div class="ch-login-card">
+            <h4 class="text-center mb-4">Lihat Kontes Order Anda</h4>
+            <p class="text-center text-muted mb-4">Masukkan kode kontes dan password Anda untuk melihat status kontes</p>
+            <div class="mb-3">
+                <input type="text" id="chContestCode" class="form-control" placeholder="Kode Kontes (10 digit)" required>
+            </div>
+            <div class="mb-4">
+                <input type="password" id="chPassword" class="form-control" placeholder="Password" required>
+            </div>
+            <button class="btn btn-primary w-100" onclick="loginAsCH()">Masuk sebagai CH</button>
+        </div>
+    </div>
+
+    <!-- FOOTER -->
     <footer>
         <div class="container">
             <div class="row">
@@ -89,25 +105,82 @@
         </div>
     </footer>
 
-    <!-- Firebase SDK (Global Version) -->
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
-    <script>
-        // Your web app's Firebase configuration
-        const firebaseConfig = {
-            apiKey: "AIzaSyBmoIXKp8BABwBMqKKXhSUBLGnYSnKNAYg",
-            authDomain: "logovisualku.firebaseapp.com",
-            projectId: "logovisualku",
-            storageBucket: "logovisualku.firebasestorage.app",
-            messagingSenderId: "64489762880",
-            appId: "1:64489762880:web:f55f26b068044f1320afa5"
-        };
+    <!-- Firebase SDK (Modular) -->
+    <script type="module">
+      // Import Firebase
+      import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
+      import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js";
+      import { getFirestore, collection, getDocs, query, where } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
 
-        // Initialize Firebase
-        const app = firebase.initializeApp(firebaseConfig);
-        const auth = firebase.auth();
-        const db = firebase.firestore();
+      // Your web app's Firebase configuration
+      const firebaseConfig = {
+        apiKey: "AIzaSyBmoIXKp8BABwBMqKKXhSUBLGnYSnKNAYg",
+        authDomain: "logovisualku.firebaseapp.com",
+        projectId: "logovisualku",
+        storageBucket: "logovisualku.firebasestorage.app",
+        messagingSenderId: "64489762880",
+        appId: "1:64489762880:web:f55f26b068044f1320afa5"
+      };
+
+      // Initialize Firebase
+      const app = initializeApp(firebaseConfig);
+      const auth = getAuth(app);
+      const db = getFirestore(app);
+
+      // Toggle Login/Logout Button
+      window.toggleLogin = () => {
+        if (auth.currentUser) {
+          auth.signOut().then(() => {
+            window.location.href = 'index.html';
+          });
+        } else {
+          window.location.href = 'login.html';
+        }
+      };
+
+      // Update Button Text
+      onAuthStateChanged(auth, (user) => {
+        const btn = document.querySelector('.btn-outline-primary');
+        if (user) {
+          btn.textContent = 'Keluar';
+          btn.onclick = () => auth.signOut().then(() => window.location.href = 'index.html');
+        } else {
+          btn.textContent = 'Masuk';
+          btn.onclick = () => window.location.href = 'login.html';
+        }
+      });
+
+      // Login as CH
+      window.loginAsCH = async () => {
+        const code = document.getElementById('chContestCode').value;
+        const password = document.getElementById('chPassword').value;
+
+        if (!code || !password) {
+          alert("Isi kode kontes dan password");
+          return;
+        }
+
+        const q = query(collection(db, 'contests'), where('contestCode', '==', code));
+        const snapshot = await getDocs(q);
+
+        if (snapshot.empty) {
+          alert("Kode kontes tidak ditemukan");
+          return;
+        }
+
+        const data = snapshot.docs[0].data();
+        if (data.chPassword !== password) {
+          alert("Password salah");
+          return;
+        }
+
+        // Simpan di sessionStorage
+        sessionStorage.setItem('chLoggedIn', 'true');
+        sessionStorage.setItem('chContestCode', code);
+
+        // Redirect ke dashboard
+        window.location.href = 'dashboard.html';
+      };
     </script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
