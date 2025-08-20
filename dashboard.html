@@ -42,7 +42,7 @@
                         <a class="nav-link" href="kontes.html">Kontes Aktif</a>
                     </li>
                     <li class="nav-item">
-                        <button class="btn btn-outline-primary btn-sm ms-2" onclick="toggleLogin()">Masuk</button>
+                        <button class="btn btn-outline-primary btn-sm ms-2" id="loginBtn">Masuk</button>
                     </li>
                 </ul>
             </div>
@@ -57,26 +57,26 @@
                     <h5 class="px-4 pb-3 border-bottom">Dashboard</h5>
                     <a href="#" id="adminTab" style="display:none;" class="active" onclick="showTab('admin')">Admin Panel</a>
                     <a href="#" id="chTab" style="display:none;" onclick="showTab('ch')">Kontes Saya</a>
-                    <a href="#" id="designerTab" style="display:none;" onclick="showTab('designer')">Desainer</a>
+                    <a href="#" id="designerTab" style="display:none;" onclick="showTab('designer')">Profil Saya</a>
                 </div>
             </div>
 
             <!-- Main Content -->
             <div class="col-lg-9">
                 <!-- Admin Panel -->
-                <div id="admin" class="tab-content active">
-                    <h4>Remote Control</h4>
+                <div id="admin" class="tab-content">
+                    <h4>Verifikasi Pembayaran</h4>
                     <div class="card">
                         <div class="card-body">
-                            <p><strong>Verifikasi & Mulai Kontes</strong></p>
-                            <input type="text" id="remoteCode" class="form-control mb-3" placeholder="Kode Kontes (10 digit)">
-                            <button class="btn btn-primary" onclick="remoteControl()">Verifikasi & Mulai</button>
+                            <p><strong>Masukkan Kode Kontes (10 digit):</strong></p>
+                            <input type="text" id="codeInput" class="form-control mb-3" style="max-width:300px;">
+                            <button class="btn btn-primary" onclick="verify()">Cek Kode</button>
                         </div>
                     </div>
-                    <div id="remoteResult"></div>
-
+                    <div id="verificationResult"></div>
+                    
                     <h4 class="mt-4">Semua Kontes</h4>
-                    <div id="allContestsList"></div>
+                    <div id="allContestsList" class="row"></div>
                 </div>
 
                 <!-- CH Panel -->
@@ -88,8 +88,18 @@
 
                 <!-- Designer Panel -->
                 <div id="designer" class="tab-content">
-                    <h4>Kontes Aktif</h4>
-                    <div id="contestsList"></div>
+                    <h4>Profil Saya</h4>
+                    <div class="card">
+                        <div class="card-body">
+                            <p><strong>Email:</strong> <span id="email"></span></p>
+                            <p><strong>Bank:</strong> <span id="bank"></span></p>
+                            <p><strong>Rekening:</strong> <span id="accountNumber"></span></p>
+                            <p><strong>Status:</strong> <span id="status" class="badge bg-success">Aktif</span></p>
+                        </div>
+                    </div>
+                    
+                    <h4 class="mt-4">Kontes yang Diikuti</h4>
+                    <div id="designerContests" class="row"></div>
                 </div>
             </div>
         </div>
@@ -132,10 +142,10 @@
     <script type="module">
       // Import Firebase
       import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
-      import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js";
-      import { getFirestore, collection, getDocs, query, where, doc, getDoc, updateDoc } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
+      import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js";
+      import { getFirestore, collection, getDocs, query, where, doc, updateDoc, orderBy } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
 
-      // Your web app's Firebase configuration
+      // Firebase Config
       const firebaseConfig = {
         apiKey: "AIzaSyBmoIXKp8BABwBMqKKXhSUBLGnYSnKNAYg",
         authDomain: "logovisualku.firebaseapp.com",
@@ -150,17 +160,9 @@
       const auth = getAuth(app);
       const db = getFirestore(app);
 
-      // Toggle Login/Logout Button
-      window.toggleLogin = () => {
-        if (auth.currentUser) {
-          auth.signOut().then(() => {
-            window.location.href = 'index.html';
-          });
-        } else {
-          window.location.href = 'login.html';
-        }
-      };
-
+      // Update Login Button
+      const loginBtn = document.getElementById('loginBtn');
+      
       // Tab Navigation
       window.showTab = (tabId) => {
         document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
@@ -169,147 +171,292 @@
 
       // Check Login
       onAuthStateChanged(auth, async (user) => {
-        const btn = document.querySelector('.btn-outline-primary');
         if (user) {
-          btn.textContent = 'Keluar';
-          btn.onclick = () => auth.signOut().then(() => window.location.href = 'index.html');
-
+          loginBtn.textContent = 'Keluar';
+          loginBtn.onclick = () => {
+            signOut(auth).then(() => {
+              window.location.href = 'index.html';
+            });
+          };
+          
+          // Admin check
           if (user.email === "admin@visualku.com") {
             document.getElementById('adminTab').style.display = 'block';
             showTab('admin');
             loadAllContests();
-          } else {
-            const q = query(collection(db, 'users'), where('uid', '==', user.uid));
-            const snap = await getDocs(q);
-            if (!snap.empty) {
-              const data = snap.docs[0].data();
-              if (data.role === 'designer') {
-                document.getElementById('designerTab').style.display = 'block';
-                showTab('designer');
-                loadContestsForDesigner();
-              }
+            return;
+          }
+          
+          // Designer check
+          const usersQuery = query(collection(db, 'users'), where('uid', '==', user.uid));
+          const userSnapshot = await getDocs(usersQuery);
+          
+          if (!userSnapshot.empty) {
+            const userData = userSnapshot.docs[0].data();
+            if (userData.role === 'designer') {
+              document.getElementById('designerTab').style.display = 'block';
+              showTab('designer');
+              loadDesignerProfile(userData);
+              loadDesignerContests();
+              return;
             }
           }
-        } else {
-          // Cek apakah CH login via sessionStorage
-          const chLoggedIn = sessionStorage.getItem('chLoggedIn');
-          const chContestCode = sessionStorage.getItem('chContestCode');
-          if (chLoggedIn && chContestCode) {
-            btn.textContent = 'Keluar';
-            btn.onclick = () => {
-              sessionStorage.clear();
-              window.location.href = 'index.html';
-            };
-            document.getElementById('chTab').style.display = 'block';
-            loadCHContest(chContestCode);
-            showTab('ch');
-          } else {
+        }
+        
+        // CH check
+        const chLoggedIn = sessionStorage.getItem('chLoggedIn');
+        const chContestCode = sessionStorage.getItem('chContestCode');
+        const chPassword = sessionStorage.getItem('chPassword');
+        
+        if (chLoggedIn && chContestCode && chPassword) {
+          loginBtn.textContent = 'Keluar';
+          loginBtn.onclick = () => {
+            sessionStorage.clear();
             window.location.href = 'index.html';
-          }
+          };
+          
+          document.getElementById('chTab').style.display = 'block';
+          showTab('ch');
+          loadCHContest(chContestCode);
+        } else {
+          // Not logged in as any role
+          window.location.href = 'index.html';
         }
       });
 
-      // Load Kontes untuk Desainer
-      async function loadContestsForDesigner() {
-        const q = query(collection(db, 'contests'), where('status', '==', 'active'));
-        const snapshot = await getDocs(q);
-        const list = document.getElementById('contestsList');
-        list.innerHTML = '';
-        snapshot.forEach(doc => {
-          const data = doc.data();
-          const card = document.createElement('div');
-          card.className = 'card';
-          card.innerHTML = `
-            <div class="card-body">
-              <h5>${data.businessName}</h5>
-              <p>${data.description}</p>
-              <p><strong>Hadiah:</strong> Rp ${data.prize.toLocaleString()}</p>
-              <a href="detail-kontes.html?code=${data.contestCode}" class="btn btn-primary">Lihat Detail</a>
-            </div>
-          `;
-          list.appendChild(card);
-        });
+      // Load Designer Profile
+      function loadDesignerProfile(userData) {
+        document.getElementById('email').textContent = userData.email;
+        document.getElementById('bank').textContent = userData.bank;
+        document.getElementById('accountNumber').textContent = userData.accountNumber;
+        document.getElementById('status').textContent = userData.status === 'active' ? 'Aktif' : 'Tidak Aktif';
+        document.getElementById('status').className = 
+          userData.status === 'active' ? 'badge bg-success' : 'badge bg-danger';
+      }
+
+      // Load Designer Contests
+      async function loadDesignerContests() {
+        const container = document.getElementById('designerContests');
+        container.innerHTML = '<p class="text-center py-4">Memuat kontes...</p>';
+        
+        try {
+          const q = query(collection(db, 'contests'), where('status', '==', 'active'));
+          const snapshot = await getDocs(q);
+          
+          if (snapshot.empty) {
+            container.innerHTML = '<p class="text-center py-4">Tidak ada kontes aktif saat ini.</p>';
+            return;
+          }
+          
+          container.innerHTML = '';
+          snapshot.forEach(doc => {
+            const data = doc.data();
+            const card = document.createElement('div');
+            card.className = 'col-md-6 mb-4';
+            card.innerHTML = `
+              <div class="card h-100">
+                <div class="card-body">
+                  <h5 class="card-title">${data.businessName}</h5>
+                  <p class="card-text">${data.description.substring(0, 100)}...</p>
+                  <div class="d-flex justify-content-between align-items-center">
+                    <span class="badge bg-primary">${data.package.toUpperCase()}</span>
+                    <span>Rp ${data.prize.toLocaleString()}</span>
+                  </div>
+                </div>
+                <div class="card-footer">
+                  <a href="detail-kontes.html?code=${data.contestCode}" class="btn btn-primary">Lihat Detail</a>
+                </div>
+              </div>
+            `;
+            container.appendChild(card);
+          });
+        } catch (error) {
+          container.innerHTML = `<p class="text-center py-4 text-danger">Gagal memuat kontes: ${error.message}</p>`;
+        }
       }
 
       // Load CH Contest
       async function loadCHContest(code) {
-        const q = query(collection(db, 'contests'), where('contestCode', '==', code));
-        const snap = await getDocs(q);
         const details = document.getElementById('chContestDetails');
         const gallery = document.getElementById('designGallery');
-
-        if (!snap.empty) {
-          const data = snap.docs[0].data();
+        
+        details.innerHTML = '<p class="text-center py-4">Memuat detail kontes...</p>';
+        gallery.innerHTML = '<p class="text-center py-4">Memuat desain...</p>';
+        
+        try {
+          // Load contest details
+          const contestsQuery = query(collection(db, 'contests'), where('contestCode', '==', code));
+          const contestSnapshot = await getDocs(contestsQuery);
+          
+          if (contestSnapshot.empty) {
+            details.innerHTML = `
+              <div class="alert alert-danger">
+                Kontes dengan kode ${code} tidak ditemukan.
+              </div>
+            `;
+            return;
+          }
+          
+          const data = contestSnapshot.docs[0].data();
           details.innerHTML = `
             <div class="card">
               <div class="card-body">
                 <h5>${data.businessName}</h5>
-                <p><strong>Status:</strong> ${data.status}</p>
+                <p><strong>Deskripsi:</strong> ${data.description}</p>
+                <p><strong>Gaya:</strong> ${data.style || 'Tidak disebutkan'}</p>
+                <p><strong>Warna:</strong> ${data.color || 'Tidak disebutkan'}</p>
+                <p><strong>Paket:</strong> ${data.package.toUpperCase()}</p>
                 <p><strong>Hadiah:</strong> Rp ${data.prize.toLocaleString()}</p>
+                <p><strong>Status:</strong> <span style="color:${data.status==='active'?'green':'orange'};">${data.status}</span></p>
               </div>
             </div>
           `;
-          // Tampilkan desain
-          const subs = await getDocs(query(collection(db, 'submissions'), where('contestCode', '==', code)));
-          gallery.innerHTML = '<h5>Desain dari Desainer</h5>';
-          subs.forEach(sub => {
+          
+          // Load designs
+          const submissionsQuery = query(
+            collection(db, 'submissions'), 
+            where('contestCode', '==', code),
+            orderBy('uploadedAt', 'desc')
+          );
+          const submissionsSnapshot = await getDocs(submissionsQuery);
+          
+          gallery.innerHTML = '<h5 class="mt-4">Desain dari Desainer</h5>';
+          
+          if (submissionsSnapshot.empty) {
+            gallery.innerHTML += '<p>Belum ada desain yang diupload.</p>';
+            return;
+          }
+          
+          const galleryContainer = document.createElement('div');
+          galleryContainer.className = 'd-flex flex-wrap';
+          
+          submissionsSnapshot.forEach(doc => {
             const img = document.createElement('img');
             img.src = 'https://placehold.co/150x150/001f4d/ffffff?text=LOGO';
             img.style.margin = '5px';
-            gallery.appendChild(img);
+            img.style.borderRadius = '10px';
+            galleryContainer.appendChild(img);
           });
+          
+          gallery.appendChild(galleryContainer);
+        } catch (error) {
+          details.innerHTML = `<div class="alert alert-danger">Gagal memuat detail kontes: ${error.message}</div>`;
+          gallery.innerHTML = '';
         }
       }
 
-      // Load Semua Kontes (Admin)
+      // Load All Contests (Admin)
       async function loadAllContests() {
-        const list = document.getElementById('allContestsList');
-        list.innerHTML = '';
-        const q = query(collection(db, 'contests'));
-        const snapshot = await getDocs(q);
-        snapshot.forEach(doc => {
-          const data = doc.data();
-          const card = document.createElement('div');
-          card.className = 'card';
-          card.innerHTML = `
-            <div class="card-body">
-              <h6>${data.businessName}</h6>
-              <p>${data.description.substring(0,80)}...</p>
-              <div class="d-flex justify-content-between">
-                <span>Rp ${data.prize.toLocaleString()}</span>
-                <span class="badge bg-${data.status==='active'?'success':'warning'}">${data.status}</span>
+        const container = document.getElementById('allContestsList');
+        container.innerHTML = '<p class="text-center py-4">Memuat kontes...</p>';
+        
+        try {
+          const q = query(collection(db, 'contests'));
+          const snapshot = await getDocs(q);
+          
+          if (snapshot.empty) {
+            container.innerHTML = '<p class="text-center py-4">Tidak ada kontes saat ini.</p>';
+            return;
+          }
+          
+          container.innerHTML = '';
+          snapshot.forEach(doc => {
+            const data = doc.data();
+            const card = document.createElement('div');
+            card.className = 'col-md-6 mb-4';
+            card.innerHTML = `
+              <div class="card">
+                <div class="card-body">
+                  <h5 class="card-title">${data.businessName}</h5>
+                  <p class="card-text">${data.description.substring(0, 100)}...</p>
+                  <div class="d-flex justify-content-between align-items-center">
+                    <span class="badge bg-${data.status==='active'?'success':'warning'}">${data.status.toUpperCase()}</span>
+                    <span>Rp ${data.prize.toLocaleString()}</span>
+                  </div>
+                </div>
+                ${data.status === 'pending' ? 
+                  `<div class="card-footer">
+                    <button class="btn btn-sm btn-primary" onclick="startContest('${doc.id}')">Mulai Kontes</button>
+                  </div>` : ''}
+              </div>
+            `;
+            container.appendChild(card);
+          });
+        } catch (error) {
+          container.innerHTML = `<p class="text-center py-4 text-danger">Gagal memuat kontes: ${error.message}</p>`;
+        }
+      }
+
+      // Verify Contest (Admin)
+      window.verify = async () => {
+        const code = document.getElementById('codeInput').value;
+        const result = document.getElementById('verificationResult');
+        
+        if (!code) {
+          result.innerHTML = '<div class="alert alert-warning mt-3">Masukkan kode kontes</div>';
+          return;
+        }
+        
+        result.innerHTML = '<div class="alert alert-info mt-3">Memverifikasi...</div>';
+        
+        try {
+          const q = query(collection(db, 'contests'), where('contestCode', '==', code));
+          const snapshot = await getDocs(q);
+          
+          if (snapshot.empty) {
+            result.innerHTML = '<div class="alert alert-danger mt-3">Kode kontes tidak ditemukan</div>';
+            return;
+          }
+          
+          const data = snapshot.docs[0].data();
+          if (data.status !== 'pending') {
+            result.innerHTML = `<div class="alert alert-warning mt-3">Kontes sudah ${data.status}</div>`;
+            return;
+          }
+          
+          result.innerHTML = `
+            <div class="card mt-3">
+              <div class="card-body">
+                <h5>Detail Kontes</h5>
+                <p><strong>Nama Bisnis:</strong> ${data.businessName}</p>
+                <p><strong>Deskripsi:</strong> ${data.description}</p>
+                <p><strong>Paket:</strong> ${data.package.toUpperCase()}</p>
+                <p><strong>Hadiah:</strong> Rp ${data.prize.toLocaleString()}</p>
+                <p><strong>Status:</strong> <span style="color:orange;">${data.status}</span></p>
+                <button class="btn btn-primary" onclick="startContest('${snapshot.docs[0].id}')">Mulai Kontes</button>
               </div>
             </div>
           `;
-          list.appendChild(card);
-        });
-      }
+        } catch (error) {
+          result.innerHTML = `<div class="alert alert-danger mt-3">Gagal memverifikasi: ${error.message}</div>`;
+        }
+      };
 
-      // Remote Control (Admin)
-      window.remoteControl = async () => {
-        const code = document.getElementById('remoteCode').value;
-        const q = query(collection(db, 'contests'), where('contestCode', '==', code));
-        const snap = await getDocs(q);
-        const result = document.getElementById('remoteResult');
-
-        if (!snap.empty) {
-          const docSnap = snap.docs[0];
+      // Start Contest (Admin)
+      window.startContest = async (id) => {
+        try {
+          const docRef = doc(db, 'contests', id);
+          await updateDoc(docRef, { status: 'active' });
+          
+          // Get contest data
+          const docSnap = await getDoc(docRef);
           const data = docSnap.data();
-          if (data.status === 'pending') {
-            await updateDoc(doc(db, 'contests', docSnap.id), { status: 'active' });
-
-            // Kirim ke saluran WhatsApp
-            const message = `*🎉 KONTES DIMULAI!*%0A%0A*Nama:* ${encodeURIComponent(data.businessName)}%0A*Deskripsi:* ${encodeURIComponent(data.description)}%0A*Paket:* ${data.package}%0A*Hadiah:* Rp ${data.prize.toLocaleString()}%0A*Kode:* ${data.contestCode}%0A%0ALihat: https://logovisualku.web.app/detail-kontes.html?code=${data.contestCode}`;
-            const channelLink = `https://wa.me/6285183089108?text=${message}`;
-            window.open(channelLink, '_blank');
-
-            result.innerHTML = `<div class="alert alert-success mt-3">Kontes dimulai! Notifikasi dikirim ke saluran WhatsApp.</div>`;
-            document.getElementById('remoteCode').value = '';
-          } else {
-            result.innerHTML = `<div class="alert alert-warning mt-3">Kontes sudah aktif</div>`;
-          }
-        } else {
-          result.innerHTML = `<div class="alert alert-danger mt-3">Kode tidak ditemukan</div>`;
+          
+          // Send notification to WhatsApp channel
+          const message = `*🎉 KONTES DIMULAI!*%0A%0A*Nama Bisnis:* ${encodeURIComponent(data.businessName)}%0A*Deskripsi:* ${encodeURIComponent(data.description)}%0A*Paket:* ${data.package.toUpperCase()}%0A*Hadiah:* Rp ${data.prize.toLocaleString()}%0A*Kode Kontes:* ${data.contestCode}%0A%0ALihat detail: https://logovisualku.web.app/detail-kontes.html?code=${data.contestCode}`;
+          const channelLink = `https://wa.me/6285183089108?text=${message}`;
+          window.open(channelLink, '_blank');
+          
+          alert('Kontes dimulai! Notifikasi dikirim ke saluran WhatsApp.');
+          
+          // Refresh contests list
+          loadAllContests();
+          
+          // Clear verification result
+          document.getElementById('verificationResult').innerHTML = '';
+          document.getElementById('codeInput').value = '';
+        } catch (error) {
+          alert("Gagal memulai kontes: " + error.message);
         }
       };
     </script>
