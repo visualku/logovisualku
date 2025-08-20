@@ -63,15 +63,15 @@
             <div class="col-lg-9">
                 <!-- Admin Panel -->
                 <div id="admin" class="tab-content">
-                    <h4>Verifikasi Pembayaran</h4>
+                    <h4>Remote Control</h4>
                     <div class="card">
                         <div class="card-body">
-                            <p><strong>Masukkan Kode Kontes (10 digit):</strong></p>
-                            <input type="text" id="codeInput" class="form-control mb-3" style="max-width:300px;">
-                            <button class="btn btn-primary" onclick="verify()">Cek Kode</button>
+                            <p><strong>Verifikasi & Mulai Kontes</strong></p>
+                            <input type="text" id="remoteCode" class="form-control mb-3" placeholder="Kode Kontes (10 digit)">
+                            <button class="btn btn-primary" onclick="remoteControl()">Verifikasi & Mulai</button>
                         </div>
                     </div>
-                    <div id="verificationResult"></div>
+                    <div id="remoteResult"></div>
                 </div>
 
                 <!-- CH Panel -->
@@ -83,10 +83,8 @@
 
                 <!-- Designer Panel -->
                 <div id="designer" class="tab-content" style="display:none;">
-                    <h4>Profil Saya</h4>
-                    <p><strong>Email:</strong> <span id="email"></span></p>
-                    <p><strong>Bank:</strong> <span id="bank"></span></p>
-                    <p><strong>Rekening:</strong> <span id="accountNumber"></span></p>
+                    <h4>Kontes Aktif</h4>
+                    <div id="contestsList"></div>
                 </div>
             </div>
         </div>
@@ -130,7 +128,7 @@
       // Import Firebase
       import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
       import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js";
-      import { getFirestore, collection, getDocs, query, where, doc, updateDoc } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
+      import { getFirestore, collection, getDocs, query, where, doc, getDoc, updateDoc } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
 
       // Your web app's Firebase configuration
       const firebaseConfig = {
@@ -179,13 +177,10 @@
             const snap = await getDocs(q);
             if (!snap.empty) {
               const data = snap.docs[0].data();
-              document.getElementById('email').textContent = data.email;
-              document.getElementById('bank').textContent = data.bank;
-              document.getElementById('accountNumber').textContent = data.accountNumber;
-
               if (data.role === 'designer') {
                 document.getElementById('designerTab').style.display = 'block';
                 showTab('designer');
+                loadContestsForDesigner();
               }
             }
           }
@@ -207,6 +202,28 @@
           }
         }
       });
+
+      // Load Kontes untuk Desainer
+      async function loadContestsForDesigner() {
+        const q = query(collection(db, 'contests'), where('status', '==', 'active'));
+        const snapshot = await getDocs(q);
+        const list = document.getElementById('contestsList');
+        list.innerHTML = '';
+        snapshot.forEach(doc => {
+          const data = doc.data();
+          const card = document.createElement('div');
+          card.className = 'card';
+          card.innerHTML = `
+            <div class="card-body">
+              <h5>${data.businessName}</h5>
+              <p>${data.description}</p>
+              <p><strong>Hadiah:</strong> Rp ${data.prize.toLocaleString()}</p>
+              <a href="detail-kontes.html?code=${data.contestCode}" class="btn btn-primary">Lihat Detail</a>
+            </div>
+          `;
+          list.appendChild(card);
+        });
+      }
 
       // Load CH Contest
       async function loadCHContest(code) {
@@ -238,49 +255,32 @@
         }
       }
 
-      // Verifikasi Pembayaran
-      window.verify = async () => {
-        const code = document.getElementById('codeInput').value;
+      // Remote Control (Admin)
+      window.remoteControl = async () => {
+        const code = document.getElementById('remoteCode').value;
         const q = query(collection(db, 'contests'), where('contestCode', '==', code));
         const snap = await getDocs(q);
-        const result = document.getElementById('verificationResult');
+        const result = document.getElementById('remoteResult');
 
         if (!snap.empty) {
           const docSnap = snap.docs[0];
           const data = docSnap.data();
-          result.innerHTML = `
-            <div class="card mt-3">
-              <div class="card-body">
-                <h5>Detail Kontes</h5>
-                <p><strong>Nama:</strong> ${data.businessName}</p>
-                <p><strong>Paket:</strong> ${data.package}</p>
-                <p><strong>Hadiah:</strong> Rp ${data.prize.toLocaleString()}</p>
-                <p><strong>Status:</strong> <span style="color:${data.status==='active'?'green':'orange'};">${data.status}</span></p>
-                <button class="btn btn-primary" onclick="start('${docSnap.id}')">Mulai Kontes</button>
-              </div>
-            </div>
-          `;
+          if (data.status === 'pending') {
+            await updateDoc(doc(db, 'contests', docSnap.id), { status: 'active' });
+
+            // Kirim ke saluran WhatsApp
+            const message = `*🎉 KONTES DIMULAI!*%0A%0A*Nama:* ${encodeURIComponent(data.businessName)}%0A*Deskripsi:* ${encodeURIComponent(data.description)}%0A*Paket:* ${data.package}%0A*Hadiah:* Rp ${data.prize.toLocaleString()}%0A*Kode:* ${data.contestCode}%0A%0ALihat: https://logovisualku.web.app/detail-kontes.html?code=${data.contestCode}`;
+            const channelLink = `https://wa.me/6285183089108?text=${message}`;
+            window.open(channelLink, '_blank');
+
+            result.innerHTML = `<div class="alert alert-success mt-3">Kontes dimulai! Notifikasi dikirim ke saluran WhatsApp.</div>`;
+            document.getElementById('remoteCode').value = '';
+          } else {
+            result.innerHTML = `<div class="alert alert-warning mt-3">Kontes sudah aktif</div>`;
+          }
         } else {
-          result.innerHTML = '<div class="alert alert-danger mt-3">Kode tidak ditemukan</div>';
+          result.innerHTML = `<div class="alert alert-danger mt-3">Kode tidak ditemukan</div>`;
         }
-      };
-
-      // Mulai Kontes + Kirim ke WhatsApp Saluran
-      window.start = async (id) => {
-        const docRef = doc(db, 'contests', id);
-        const docSnap = await docRef.get();
-        const data = docSnap.data();
-
-        await updateDoc(docRef, { status: 'active' });
-
-        // Kirim ke saluran WhatsApp
-        const message = `*🎉 KONTES DIMULAI!*%0A%0A*Nama:* ${encodeURIComponent(data.businessName)}%0A*Deskripsi:* ${encodeURIComponent(data.description)}%0A*Paket:* ${data.package}%0A*Hadiah:* Rp ${data.prize.toLocaleString()}%0A*Kode:* ${data.contestCode}%0A%0ALihat: https://logovisualku.web.app/detail-kontes.html?code=${data.contestCode}`;
-        const channelLink = `https://wa.me/6285183089108?text=${message}`;
-        window.open(channelLink, '_blank');
-
-        alert('Kontes dimulai! Notifikasi dikirim ke saluran WhatsApp.');
-        document.getElementById('verificationResult').innerHTML = '';
-        document.getElementById('codeInput').value = '';
       };
     </script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
