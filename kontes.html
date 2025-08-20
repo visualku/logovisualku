@@ -37,7 +37,7 @@
                         <a class="nav-link active" href="kontes.html">Kontes Aktif</a>
                     </li>
                     <li class="nav-item">
-                        <button class="btn btn-outline-primary btn-sm ms-2" onclick="toggleLogin()">Masuk</button>
+                        <button class="btn btn-outline-primary btn-sm ms-2" id="loginBtn">Masuk</button>
                     </li>
                 </ul>
             </div>
@@ -48,7 +48,7 @@
     <div class="container py-5">
         <h2>Kontes Aktif</h2>
         <div id="contestsContainer">
-            <p>Memuat kontes...</p>
+            <p class="text-center py-4">Memuat kontes...</p>
         </div>
     </div>
 
@@ -89,9 +89,10 @@
     <script type="module">
       // Import Firebase
       import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
+      import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js";
       import { getFirestore, collection, getDocs, query, where } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
 
-      // Your web app's Firebase configuration
+      // Firebase Config
       const firebaseConfig = {
         apiKey: "AIzaSyBmoIXKp8BABwBMqKKXhSUBLGnYSnKNAYg",
         authDomain: "logovisualku.firebaseapp.com",
@@ -103,45 +104,92 @@
 
       // Initialize Firebase
       const app = initializeApp(firebaseConfig);
+      const auth = getAuth(app);
       const db = getFirestore(app);
 
-      // Toggle Login/Logout Button
-      window.toggleLogin = () => {
-        window.location.href = 'login.html';
-      };
+      // Update Login Button
+      const loginBtn = document.getElementById('loginBtn');
+      
+      onAuthStateChanged(auth, (user) => {
+        if (user) {
+          loginBtn.textContent = 'Keluar';
+          loginBtn.onclick = () => {
+            signOut(auth).then(() => {
+              window.location.href = 'index.html';
+            });
+          };
+        } else {
+          loginBtn.textContent = 'Masuk';
+          loginBtn.onclick = () => {
+            window.location.href = 'login.html';
+          };
+        }
+      });
 
-      // Load Kontes Aktif
-      window.onload = async () => {
+      // Check if user is logged in as designer
+      onAuthStateChanged(auth, async (user) => {
+        if (!user) {
+          // Not logged in - redirect to login
+          window.location.href = 'login.html';
+          return;
+        }
+
+        // Check if user is a designer
+        const q = query(collection(db, 'users'), where('uid', '==', user.uid));
+        const snapshot = await getDocs(q);
+        
+        if (snapshot.empty) {
+          // Not a registered designer - redirect to homepage
+          window.location.href = 'index.html';
+          return;
+        }
+        
+        const userData = snapshot.docs[0].data();
+        if (userData.role !== 'designer') {
+          // Not a designer - redirect to homepage
+          window.location.href = 'index.html';
+          return;
+        }
+        
+        // Load active contests
+        loadActiveContests();
+      });
+
+      // Load Active Contests
+      async function loadActiveContests() {
         const container = document.getElementById('contestsContainer');
-        container.innerHTML = '<p>Memuat kontes...</p>';
-
+        container.innerHTML = '<p class="text-center py-4">Memuat kontes...</p>';
+        
         try {
           const q = query(collection(db, 'contests'), where('status', '==', 'active'));
           const snapshot = await getDocs(q);
-
+          
           if (snapshot.empty) {
-            container.innerHTML = '<p>Tidak ada kontes aktif.</p>';
-          } else {
-            container.innerHTML = '';
-            snapshot.forEach(doc => {
-              const data = doc.data();
-              const card = document.createElement('div');
-              card.className = 'card';
-              card.innerHTML = `
-                <div class="card-body">
-                  <h5>${data.businessName}</h5>
-                  <p>${data.description}</p>
-                  <p><strong>Hadiah:</strong> Rp ${data.prize.toLocaleString()}</p>
+            container.innerHTML = '<p class="text-center py-4">Tidak ada kontes aktif saat ini.</p>';
+            return;
+          }
+          
+          container.innerHTML = '';
+          snapshot.forEach(doc => {
+            const data = doc.data();
+            const card = document.createElement('div');
+            card.className = 'card mb-4';
+            card.innerHTML = `
+              <div class="card-body">
+                <h5 class="card-title">${data.businessName}</h5>
+                <p class="card-text">${data.description}</p>
+                <div class="d-flex justify-content-between align-items-center">
+                  <span class="badge bg-primary">${data.package.toUpperCase()} | Rp ${data.prize.toLocaleString()}</span>
                   <a href="detail-kontes.html?code=${data.contestCode}" class="btn btn-primary">Lihat Detail</a>
                 </div>
-              `;
-              container.appendChild(card);
-            });
-          }
+              </div>
+            `;
+            container.appendChild(card);
+          });
         } catch (error) {
-          container.innerHTML = `<p>Gagal memuat kontes: ${error.message}</p>`;
+          container.innerHTML = `<p class="text-center py-4 text-danger">Gagal memuat kontes: ${error.message}</p>`;
         }
-      };
+      }
     </script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
