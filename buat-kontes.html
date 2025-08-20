@@ -67,13 +67,6 @@
                 <button type="submit" class="btn btn-primary btn-lg">Lanjut ke Pembayaran</button>
             </div>
         </form>
-
-        <div id="successMessage" class="alert alert-success mt-5" style="display:none;">
-            <h5><i class="fas fa-check-circle"></i> Kontes Dibuat!</h5>
-            <p><strong>Kode Kontes:</strong> <span id="contestCode" style="font-weight:700;">1008257382</span></p>
-            <p>Transfer ke BCA: <strong>123-4567-890</strong></p>
-            <p>Kirim bukti ke WhatsApp: <strong>0851-8308-910</strong></p>
-        </div>
     </div>
 
     <!-- Firebase SDK (Modular) -->
@@ -82,6 +75,7 @@
       import { getAuth } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js";
       import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
 
+      // Firebase config
       const firebaseConfig = {
         apiKey: "AIzaSyBmoIXKp8BABwBMqKKXhSUBLGnYSnKNAYg",
         authDomain: "logovisualku.firebaseapp.com",
@@ -115,6 +109,7 @@
 
           const contestCode = generateCode();
 
+          // Simpan ke Firestore
           await addDoc(collection(db, 'contests'), {
             businessName: form.businessName.value,
             description: form.description.value,
@@ -129,18 +124,21 @@
             createdAt: new Date()
           });
 
-          // Kirim ke WhatsApp Anda (0851-8308-910)
-          const message = `*🆕 KONTES BARU DIBUAT*%0A%0A*Nama Bisnis:* ${encodeURIComponent(form.businessName.value)}%0A*Deskripsi:* ${encodeURIComponent(form.description.value)}%0A*Paket:* ${package.toUpperCase()}%0A*Hadiah:* Rp ${parseInt(form.prize.value).toLocaleString()}%0A*Kode Kontes:* ${contestCode}%0A*No HP CH:* ${form.whatsapp.value}%0A%0AStatus: *Pending (Belum Bayar)*`;
+          // Buat pesan WhatsApp
+          const message = `*🆕 KONTES BARU DIBUAT*%0A%0A*Nama Bisnis:* ${encodeURIComponent(form.businessName.value)}%0A*Deskripsi:* ${encodeURIComponent(form.description.value)}%0A*Paket:* ${package.toUpperCase()}%0A*Hadiah:* Rp ${parseInt(form.prize.value).toLocaleString()}%0A*Kode Kontes:* ${contestCode}%0A*No HP CH:* ${form.whatsapp.value}%0A*Password:* ${form.chPassword.value}%0A%0AStatus: *Pending (Belum Bayar)*`;
+          
+          // Buka WhatsApp
           const whatsappLink = `https://wa.me/6285183089108?text=${message}`;
           window.open(whatsappLink, '_blank');
 
-          // Tampilkan hasil
-          document.getElementById('contestForm').style.display = 'none';
-          document.getElementById('contestCode').textContent = contestCode;
-          document.getElementById('successMessage').style.display = 'block';
+          // Kembali ke beranda
+          setTimeout(() => {
+            window.location.href = 'index.html';
+          }, 1500); // Tunggu 1.5 detik agar WhatsApp terbuka
         });
       });
 
+      // Generate Kode 10 Digit
       function generateCode() {
         const now = new Date();
         const date = String(now.getDate()).padStart(2, '0');
