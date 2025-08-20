@@ -1,71 +1,449 @@
-<!-- Tambahkan di bagian <head> -->
-<script>
-  // Debugging global
-  window.addEventListener('error', (event) => {
-    console.error("Global Error:", event.message);
-  });
-</script>
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - LogoVisualku</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
+        body { background: #f8f9fa; color: #1a1a1a; }
+        .navbar { background: white; box-shadow: 0 2px 20px rgba(0, 0, 0, 0.1); padding: 1rem 0; }
+        .navbar-brand { font-weight: 700; color: #001f4d !important; font-size: 1.5rem; }
+        .nav-link { color: #333 !important; margin: 0 10px; }
+        .sidebar { min-height: 100vh; background: #001f4d; color: white; padding: 20px 0; }
+        .sidebar a { color: #a0d8ff; text-decoration: none; padding: 12px 20px; display: block; }
+        .sidebar a:hover, .sidebar a.active { background: #001533; color: white; }
+        .card { border-radius: 16px; box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05); margin-bottom: 20px; }
+        .btn-primary { background: #001f4d; border: none; padding: 10px 25px; border-radius: 50px; font-weight: 600; }
+        footer { background: #001f4d; color: #ddd; padding: 60px 0 30px; }
+        footer a { color: #a0d8ff; text-decoration: none; }
+        .tab-content { display: none; }
+        .active { display: block !important; }
+    </style>
+</head>
+<body>
+    <!-- HEADER -->
+    <nav class="navbar navbar-expand-lg navbar-light">
+        <div class="container">
+            <a class="navbar-brand" href="index.html">
+                <i class="fas fa-trophy me-2"></i>LogoVisualku
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="index.html">Beranda</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="kontes.html">Kontes Aktif</a>
+                    </li>
+                    <li class="nav-item">
+                        <button class="btn btn-outline-primary btn-sm ms-2" id="loginBtn">Masuk</button>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
 
-<!-- Tambahkan di bagian script Firebase -->
-<script type="module">
-  // ... kode sebelumnya ...
+    <div class="container-fluid py-5">
+        <div class="row">
+            <!-- Sidebar -->
+            <div class="col-lg-3">
+                <div class="sidebar">
+                    <h5 class="px-4 pb-3 border-bottom">Dashboard</h5>
+                    <a href="#" id="adminTab" style="display:none;" class="active" onclick="showTab('admin')">Admin Panel</a>
+                    <a href="#" id="chTab" style="display:none;" onclick="showTab('ch')">Kontes Saya</a>
+                    <a href="#" id="designerTab" style="display:none;" onclick="showTab('designer')">Profil Saya</a>
+                </div>
+            </div>
 
-  onAuthStateChanged(auth, async (user) => {
-    console.log("Debug: User state changed", user);
+            <!-- Main Content -->
+            <div class="col-lg-9">
+                <!-- Admin Panel -->
+                <div id="admin" class="tab-content">
+                    <h4>Verifikasi Pembayaran</h4>
+                    <div class="card">
+                        <div class="card-body">
+                            <p><strong>Masukkan Kode Kontes (10 digit):</strong></p>
+                            <input type="text" id="codeInput" class="form-control mb-3" style="max-width:300px;">
+                            <button class="btn btn-primary" onclick="verify()">Cek Kode</button>
+                        </div>
+                    </div>
+                    <div id="verificationResult"></div>
+                    
+                    <h4 class="mt-4">Semua Kontes</h4>
+                    <div id="allContestsList" class="row"></div>
+                </div>
+
+                <!-- CH Panel -->
+                <div id="ch" class="tab-content">
+                    <h4>Kontes Anda</h4>
+                    <div id="chContestDetails"></div>
+                    <div id="designGallery"></div>
+                </div>
+
+                <!-- Designer Panel -->
+                <div id="designer" class="tab-content">
+                    <h4>Profil Saya</h4>
+                    <div class="card">
+                        <div class="card-body">
+                            <p><strong>Email:</strong> <span id="email"></span></p>
+                            <p><strong>Bank:</strong> <span id="bank"></span></p>
+                            <p><strong>Rekening:</strong> <span id="accountNumber"></span></p>
+                            <p><strong>Status:</strong> <span id="status" class="badge bg-success">Aktif</span></p>
+                        </div>
+                    </div>
+                    
+                    <h4 class="mt-4">Kontes yang Diikuti</h4>
+                    <div id="designerContests" class="row"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- FOOTER -->
+    <footer>
+        <div class="container">
+            <div class="row">
+                <div class="col-lg-4 mb-4">
+                    <h5>LogoVisualku</h5>
+                    <p>Platform kontes logo terbaik di Indonesia. Cepat, mudah, dan hasilnya luar biasa.</p>
+                </div>
+                <div class="col-lg-2 col-md-4 mb-4">
+                    <h6>Link Cepat</h6>
+                    <ul class="list-unstyled">
+                        <li class="mb-2"><a href="#">Beranda</a></li>
+                        <li class="mb-2"><a href="kontes.html">Kontes Aktif</a></li>
+                    </ul>
+                </div>
+                <div class="col-lg-3 col-md-4 mb-4">
+                    <h6>Kontak</h6>
+                    <p><i class="fas fa-whatsapp me-2"></i> 0851-8308-910</p>
+                    <p><i class="fas fa-envelope me-2"></i> reneingrid@gmail.com</p>
+                </div>
+                <div class="col-lg-3 col-md-4">
+                    <h6>Untuk Desainer</h6>
+                    <p>Hasilkan uang dari kreativitasmu!</p>
+                    <a href="daftar.html" class="btn btn-outline-light btn-sm">Daftar Sekarang</a>
+                </div>
+            </div>
+            <hr class="my-4" style="border-color: rgba(255, 255, 255, 0.2);">
+            <div class="text-center">
+                <p class="mb-0">&copy; 2024 LogoVisualku. Semua hak cipta dilindungi.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Firebase SDK (Compatibility Version - NO NPM REQUIRED) -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
     
-    if (user) {
-      // User adalah admin/desainer
-      loginBtn.textContent = 'Keluar';
-      loginBtn.onclick = () => {
-        signOut(auth).then(() => {
-          window.location.href = 'index.html';
-        });
+    <script>
+      // Your web app's Firebase configuration
+      const firebaseConfig = {
+        apiKey: "AIzaSyBmoIXKp8BABwBMqKKXhSUBLGnYSnKNAYg",
+        authDomain: "logovisualku.firebaseapp.com",
+        projectId: "logovisualku",
+        storageBucket: "logovisualku.firebasestorage.app",
+        messagingSenderId: "64489762880",
+        appId: "1:64489762880:web:f55f26b068044f1320afa5"
       };
+
+      // Initialize Firebase
+      firebase.initializeApp(firebaseConfig);
+      const auth = firebase.auth();
+      const db = firebase.firestore();
+
+      // Update Login Button
+      const loginBtn = document.getElementById('loginBtn');
       
-      if (user.email === "admin@visualku.com") {
-        document.getElementById('adminTab').style.display = 'block';
-        showTab('admin');
-        loadAllContests();
-        return;
+      // Tab Navigation
+      function showTab(tabId) {
+        document.querySelectorAll('.tab-content').forEach(tab => tab.style.display = 'none');
+        document.getElementById(tabId).style.display = 'block';
       }
-      
-      // Cek desainer
-      try {
-        const usersQuery = query(collection(db, 'users'), where('uid', '==', user.uid));
-        const userSnapshot = await getDocs(usersQuery);
-        
-        if (!userSnapshot.empty) {
-          const userData = userSnapshot.docs[0].data();
-          if (userData.role === 'designer') {
-            document.getElementById('designerTab').style.display = 'block';
-            showTab('designer');
-            loadDesignerProfile(userData);
-            loadDesignerContests();
+
+      // Check Login
+      auth.onAuthStateChanged((user) => {
+        if (user) {
+          loginBtn.textContent = 'Keluar';
+          loginBtn.onclick = () => {
+            auth.signOut().then(() => {
+              window.location.href = 'index.html';
+            });
+          };
+          
+          // Admin check
+          if (user.email === "admin@visualku.com") {
+            document.getElementById('adminTab').style.display = 'block';
+            showTab('admin');
+            loadAllContests();
             return;
           }
+          
+          // Designer check
+          const usersRef = db.collection('users').where('uid', '==', user.uid);
+          usersRef.get().then((querySnapshot) => {
+            if (!querySnapshot.empty) {
+              const userData = querySnapshot.docs[0].data();
+              if (userData.role === 'designer') {
+                document.getElementById('designerTab').style.display = 'block';
+                showTab('designer');
+                loadDesignerProfile(userData);
+                loadDesignerContests();
+              }
+            }
+          });
         }
-      } catch (error) {
-        console.error("Error fetching user data:", error);
+        
+        // CH check
+        const chLoggedIn = sessionStorage.getItem('chLoggedIn');
+        const chContestCode = sessionStorage.getItem('chContestCode');
+        const chPassword = sessionStorage.getItem('chPassword');
+        
+        if (chLoggedIn && chContestCode && chPassword) {
+          loginBtn.textContent = 'Keluar';
+          loginBtn.onclick = () => {
+            sessionStorage.clear();
+            window.location.href = 'index.html';
+          };
+          
+          document.getElementById('chTab').style.display = 'block';
+          showTab('ch');
+          loadCHContest(chContestCode);
+        } else if (!user) {
+          // Not logged in as any role
+          window.location.href = 'index.html';
+        }
+      });
+
+      // Load Designer Profile
+      function loadDesignerProfile(userData) {
+        document.getElementById('email').textContent = userData.email;
+        document.getElementById('bank').textContent = userData.bank;
+        document.getElementById('accountNumber').textContent = userData.accountNumber;
+        document.getElementById('status').textContent = userData.status === 'active' ? 'Aktif' : 'Tidak Aktif';
+        document.getElementById('status').className = 
+          userData.status === 'active' ? 'badge bg-success' : 'badge bg-danger';
       }
-    }
-    
-    // Cek CH
-    const chLoggedIn = sessionStorage.getItem('chLoggedIn');
-    const chContestCode = sessionStorage.getItem('chContestCode');
-    
-    if (chLoggedIn && chContestCode) {
-      loginBtn.textContent = 'Keluar';
-      loginBtn.onclick = () => {
-        sessionStorage.clear();
-        window.location.href = 'index.html';
-      };
-      
-      document.getElementById('chTab').style.display = 'block';
-      showTab('ch');
-      loadCHContest(chContestCode);
-    } else {
-      // Tidak ada yang login
-      window.location.href = 'index.html';
-    }
-  });
-</script>
+
+      // Load Designer Contests
+      function loadDesignerContests() {
+        const container = document.getElementById('designerContests');
+        container.innerHTML = '<p class="text-center py-4">Memuat kontes...</p>';
+        
+        const contestsRef = db.collection('contests').where('status', '==', 'active');
+        contestsRef.get().then((querySnapshot) => {
+          if (querySnapshot.empty) {
+            container.innerHTML = '<p class="text-center py-4">Tidak ada kontes aktif saat ini.</p>';
+            return;
+          }
+          
+          container.innerHTML = '';
+          querySnapshot.forEach(doc => {
+            const data = doc.data();
+            const card = document.createElement('div');
+            card.className = 'col-md-6 mb-4';
+            card.innerHTML = `
+              <div class="card h-100">
+                <div class="card-body">
+                  <h5 class="card-title">${data.businessName}</h5>
+                  <p class="card-text">${data.description.substring(0, 100)}...</p>
+                  <div class="d-flex justify-content-between align-items-center">
+                    <span class="badge bg-primary">${data.package.toUpperCase()}</span>
+                    <span>Rp ${data.prize.toLocaleString()}</span>
+                  </div>
+                </div>
+                <div class="card-footer">
+                  <a href="detail-kontes.html?code=${data.contestCode}" class="btn btn-primary">Lihat Detail</a>
+                </div>
+              </div>
+            `;
+            container.appendChild(card);
+          });
+        }).catch((error) => {
+          container.innerHTML = `<p class="text-center py-4 text-danger">Gagal memuat kontes: ${error.message}</p>`;
+        });
+      }
+
+      // Load CH Contest
+      function loadCHContest(code) {
+        const details = document.getElementById('chContestDetails');
+        const gallery = document.getElementById('designGallery');
+        
+        details.innerHTML = '<p class="text-center py-4">Memuat detail kontes...</p>';
+        gallery.innerHTML = '<p class="text-center py-4">Memuat desain...</p>';
+        
+        const contestsRef = db.collection('contests').where('contestCode', '==', code);
+        contestsRef.get().then((querySnapshot) => {
+          if (querySnapshot.empty) {
+            details.innerHTML = `
+              <div class="alert alert-danger">
+                Kontes dengan kode ${code} tidak ditemukan.
+              </div>
+            `;
+            return;
+          }
+          
+          const data = querySnapshot.docs[0].data();
+          details.innerHTML = `
+            <div class="card">
+              <div class="card-body">
+                <h5>${data.businessName}</h5>
+                <p><strong>Deskripsi:</strong> ${data.description}</p>
+                <p><strong>Gaya:</strong> ${data.style || 'Tidak disebutkan'}</p>
+                <p><strong>Warna:</strong> ${data.color || 'Tidak disebutkan'}</p>
+                <p><strong>Paket:</strong> ${data.package.toUpperCase()}</p>
+                <p><strong>Hadiah:</strong> Rp ${data.prize.toLocaleString()}</p>
+                <p><strong>Status:</strong> <span style="color:${data.status==='active'?'green':'orange'};">${data.status}</span></p>
+              </div>
+            </div>
+          `;
+          
+          // Load designs
+          const submissionsRef = db.collection('submissions').where('contestCode', '==', code);
+          submissionsRef.get().then((submissionsSnapshot) => {
+            gallery.innerHTML = '<h5 class="mt-4">Desain dari Desainer</h5>';
+            
+            if (submissionsSnapshot.empty) {
+              gallery.innerHTML += '<p>Belum ada desain yang diupload.</p>';
+              return;
+            }
+            
+            const galleryContainer = document.createElement('div');
+            galleryContainer.className = 'd-flex flex-wrap';
+            
+            submissionsSnapshot.forEach(doc => {
+              const img = document.createElement('img');
+              img.src = 'https://placehold.co/150x150/001f4d/ffffff?text=LOGO';
+              img.style.margin = '5px';
+              img.style.borderRadius = '10px';
+              galleryContainer.appendChild(img);
+            });
+            
+            gallery.appendChild(galleryContainer);
+          });
+        }).catch((error) => {
+          details.innerHTML = `<div class="alert alert-danger">Gagal memuat detail kontes: ${error.message}</div>`;
+          gallery.innerHTML = '';
+        });
+      }
+
+      // Load All Contests (Admin)
+      function loadAllContests() {
+        const container = document.getElementById('allContestsList');
+        container.innerHTML = '<p class="text-center py-4">Memuat kontes...</p>';
+        
+        db.collection('contests').get().then((querySnapshot) => {
+          if (querySnapshot.empty) {
+            container.innerHTML = '<p class="text-center py-4">Tidak ada kontes saat ini.</p>';
+            return;
+          }
+          
+          container.innerHTML = '';
+          querySnapshot.forEach(doc => {
+            const data = doc.data();
+            const card = document.createElement('div');
+            card.className = 'col-md-6 mb-4';
+            card.innerHTML = `
+              <div class="card">
+                <div class="card-body">
+                  <h5 class="card-title">${data.businessName}</h5>
+                  <p class="card-text">${data.description.substring(0, 100)}...</p>
+                  <div class="d-flex justify-content-between align-items-center">
+                    <span class="badge bg-${data.status==='active'?'success':'warning'}">${data.status.toUpperCase()}</span>
+                    <span>Rp ${data.prize.toLocaleString()}</span>
+                  </div>
+                </div>
+                ${data.status === 'pending' ? 
+                  `<div class="card-footer">
+                    <button class="btn btn-sm btn-primary" onclick="startContest('${doc.id}')">Mulai Kontes</button>
+                  </div>` : ''}
+              </div>
+            `;
+            container.appendChild(card);
+          });
+        }).catch((error) => {
+          container.innerHTML = `<p class="text-center py-4 text-danger">Gagal memuat kontes: ${error.message}</p>`;
+        });
+      }
+
+      // Verify Contest (Admin)
+      function verify() {
+        const code = document.getElementById('codeInput').value;
+        const result = document.getElementById('verificationResult');
+        
+        if (!code) {
+          result.innerHTML = '<div class="alert alert-warning mt-3">Masukkan kode kontes</div>';
+          return;
+        }
+        
+        result.innerHTML = '<div class="alert alert-info mt-3">Memverifikasi...</div>';
+        
+        const contestsRef = db.collection('contes').where('contestCode', '==', code);
+        contestsRef.get().then((querySnapshot) => {
+          if (querySnapshot.empty) {
+            result.innerHTML = '<div class="alert alert-danger mt-3">Kode kontes tidak ditemukan</div>';
+            return;
+          }
+          
+          const data = querySnapshot.docs[0].data();
+          if (data.status !== 'pending') {
+            result.innerHTML = `<div class="alert alert-warning mt-3">Kontes sudah ${data.status}</div>`;
+            return;
+          }
+          
+          result.innerHTML = `
+            <div class="card mt-3">
+              <div class="card-body">
+                <h5>Detail Kontes</h5>
+                <p><strong>Nama Bisnis:</strong> ${data.businessName}</p>
+                <p><strong>Deskripsi:</strong> ${data.description}</p>
+                <p><strong>Paket:</strong> ${data.package.toUpperCase()}</p>
+                <p><strong>Hadiah:</strong> Rp ${data.prize.toLocaleString()}</p>
+                <p><strong>Status:</strong> <span style="color:orange;">${data.status}</span></p>
+                <button class="btn btn-primary" onclick="startContest('${querySnapshot.docs[0].id}')">Mulai Kontes</button>
+              </div>
+            </div>
+          `;
+        }).catch((error) => {
+          result.innerHTML = `<div class="alert alert-danger mt-3">Gagal memverifikasi: ${error.message}</div>`;
+        });
+      }
+
+      // Start Contest (Admin)
+      function startContest(id) {
+        db.collection('contests').doc(id).update({
+          status: 'active'
+        }).then(() => {
+          // Get contest data
+          db.collection('contests').doc(id).get().then((doc) => {
+            const data = doc.data();
+            
+            // Send notification to WhatsApp channel
+            const message = `*🎉 KONTES DIMULAI!*%0A%0A*Nama Bisnis:* ${encodeURIComponent(data.businessName)}%0A*Deskripsi:* ${encodeURIComponent(data.description)}%0A*Paket:* ${data.package.toUpperCase()}%0A*Hadiah:* Rp ${data.prize.toLocaleString()}%0A*Kode Kontes:* ${data.contestCode}%0A%0ALihat detail: https://logovisualku.web.app/detail-kontes.html?code=${data.contestCode}`;
+            const channelLink = `https://wa.me/6285183089108?text=${message}`;
+            window.open(channelLink, '_blank');
+            
+            alert('Kontes dimulai! Notifikasi dikirim ke saluran WhatsApp.');
+            
+            // Refresh contests list
+            loadAllContests();
+            
+            // Clear verification result
+            document.getElementById('verificationResult').innerHTML = '';
+            document.getElementById('codeInput').value = '';
+          });
+        }).catch((error) => {
+          alert("Gagal memulai kontes: " + error.message);
+        });
+      }
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
