@@ -37,7 +37,7 @@
                         <a class="nav-link" href="kontes.html">Kontes Aktif</a>
                     </li>
                     <li class="nav-item">
-                        <button class="btn btn-outline-primary btn-sm ms-2" onclick="toggleLogin()">Masuk</button>
+                        <button class="btn btn-outline-primary btn-sm ms-2" id="loginBtn">Masuk</button>
                     </li>
                 </ul>
             </div>
@@ -121,7 +121,7 @@
       import { getAuth, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js";
       import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
 
-      // Your web app's Firebase configuration
+      // Firebase Config
       const firebaseConfig = {
         apiKey: "AIzaSyBmoIXKp8BABwBMqKKXhSUBLGnYSnKNAYg",
         authDomain: "logovisualku.firebaseapp.com",
@@ -136,18 +136,26 @@
       const auth = getAuth(app);
       const db = getFirestore(app);
 
-      // Toggle Login/Logout Button
-      window.toggleLogin = () => {
-        if (auth.currentUser) {
-          auth.signOut().then(() => {
-            window.location.href = 'index.html';
-          });
+      // Update Login Button
+      const loginBtn = document.getElementById('loginBtn');
+      
+      auth.onAuthStateChanged((user) => {
+        if (user) {
+          loginBtn.textContent = 'Keluar';
+          loginBtn.onclick = () => {
+            auth.signOut().then(() => {
+              window.location.href = 'index.html';
+            });
+          };
         } else {
-          window.location.href = 'login.html';
+          loginBtn.textContent = 'Masuk';
+          loginBtn.onclick = () => {
+            window.location.href = 'login.html';
+          };
         }
-      };
+      });
 
-      // Handle Register
+      // Handle Registration
       document.getElementById('registerForm').addEventListener('submit', async (e) => {
         e.preventDefault();
         const name = document.getElementById('name').value;
@@ -156,10 +164,19 @@
         const bank = document.getElementById('bank').value;
         const accountNumber = document.getElementById('accountNumber').value;
 
+        if (!bank) {
+          alert("Pilih metode penarikan");
+          return;
+        }
+
         try {
+          // Create user with email and password
           const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+          const user = userCredential.user;
+
+          // Save user data to Firestore
           await addDoc(collection(db, 'users'), {
-            uid: userCredential.user.uid,
+            uid: user.uid,
             name,
             email,
             bank,
@@ -168,22 +185,11 @@
             status: 'active',
             createdAt: new Date()
           });
-          alert('Pendaftaran berhasil!');
-          window.location.href = 'kontes.html';
+
+          alert('Pendaftaran berhasil! Silakan masuk dengan akun Anda.');
+          window.location.href = 'login.html';
         } catch (error) {
           alert("Gagal daftar: " + error.message);
-        }
-      });
-
-      // Update Button Text
-      auth.onAuthStateChanged((user) => {
-        const btn = document.querySelector('.btn-outline-primary');
-        if (user) {
-          btn.textContent = 'Keluar';
-          btn.onclick = () => auth.signOut().then(() => window.location.href = 'index.html');
-        } else {
-          btn.textContent = 'Masuk';
-          btn.onclick = () => window.location.href = 'login.html';
         }
       });
     </script>
