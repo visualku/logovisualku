@@ -37,7 +37,7 @@
                         <a class="nav-link" href="kontes.html">Kontes Aktif</a>
                     </li>
                     <li class="nav-item">
-                        <button class="btn btn-outline-primary btn-sm ms-2" onclick="toggleLogin()">Masuk</button>
+                        <button class="btn btn-outline-primary btn-sm ms-2" id="loginBtn">Masuk</button>
                     </li>
                 </ul>
             </div>
@@ -100,59 +100,59 @@
         </div>
     </footer>
 
-    <!-- Firebase SDK (Global Version) -->
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
-    <script>
-        const firebaseConfig = {
-            apiKey: "AIzaSyBmoIXKp8BABwBMqKKXhSUBLGnYSnKNAYg",
-            authDomain: "logovisualku.firebaseapp.com",
-            projectId: "logovisualku",
-            storageBucket: "logovisualku.firebasestorage.app",
-            messagingSenderId: "64489762880",
-            appId: "1:64489762880:web:f55f26b068044f1320afa5"
-        };
+    <!-- Firebase SDK (Modular) -->
+    <script type="module">
+      // Import Firebase
+      import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
+      import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js";
 
-        const app = firebase.initializeApp(firebaseConfig);
-        const auth = firebase.auth();
+      // Firebase Config
+      const firebaseConfig = {
+        apiKey: "AIzaSyBmoIXKp8BABwBMqKKXhSUBLGnYSnKNAYg",
+        authDomain: "logovisualku.firebaseapp.com",
+        projectId: "logovisualku",
+        storageBucket: "logovisualku.firebasestorage.app",
+        messagingSenderId: "64489762880",
+        appId: "1:64489762880:web:f55f26b068044f1320afa5"
+      };
 
-        // Toggle Login/Logout Button
-        function toggleLogin() {
-            if (auth.currentUser) {
-                auth.signOut().then(() => {
-                    window.location.href = 'index.html';
-                });
-            } else {
-                window.location.href = 'login.html';
-            }
+      // Initialize Firebase
+      const app = initializeApp(firebaseConfig);
+      const auth = getAuth(app);
+
+      // Update Login Button
+      const loginBtn = document.getElementById('loginBtn');
+      
+      onAuthStateChanged(auth, (user) => {
+        if (user) {
+          loginBtn.textContent = 'Keluar';
+          loginBtn.onclick = () => {
+            signOut(auth).then(() => {
+              window.location.href = 'index.html';
+            });
+          };
+        } else {
+          loginBtn.textContent = 'Masuk';
+          loginBtn.onclick = () => {
+            window.location.href = 'login.html';
+          };
         }
+      });
 
-        // Handle Login
-        document.getElementById('loginForm').addEventListener('submit', (e) => {
-            e.preventDefault();
-            const email = document.getElementById('email').value;
-            const password = document.getElementById('password').value;
+      // Handle Login
+      document.getElementById('loginForm').addEventListener('submit', (e) => {
+        e.preventDefault();
+        const email = document.getElementById('email').value;
+        const password = document.getElementById('password').value;
 
-            auth.signInWithEmailAndPassword(email, password)
-                .then(() => {
-                    window.location.href = 'dashboard.html';
-                })
-                .catch((error) => {
-                    alert("Login gagal: " + error.message);
-                });
-        });
-
-        // Update Button Text
-        auth.onAuthStateChanged((user) => {
-            const btn = document.querySelector('.btn-outline-primary');
-            if (user) {
-                btn.textContent = 'Keluar';
-                btn.onclick = () => auth.signOut().then(() => window.location.href = 'index.html');
-            } else {
-                btn.textContent = 'Masuk';
-                btn.onclick = () => window.location.href = 'login.html';
-            }
-        });
+        signInWithEmailAndPassword(auth, email, password)
+          .then(() => {
+            window.location.href = 'dashboard.html';
+          })
+          .catch((error) => {
+            alert("Login gagal: " + error.message);
+          });
+      });
     </script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
