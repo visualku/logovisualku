@@ -6,10 +6,35 @@
     <title>Buat Kontes - LogoVisualku</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
-        .package-card { border:1px solid #e0e0e0; border-radius:16px; cursor:pointer; text-align:center; }
-        .package-card.selected { border:2px solid #001f4d; background:#f0f5ff; }
-        .package-price { font-size:1.5rem; font-weight:700; color:#001f4d; }
-        .btn-primary { background:#001f4d; color:white; border:none; padding:12px 30px; border-radius:50px; font-weight:600; }
+        .package-card {
+            border: 1px solid #e0e0e0;
+            border-radius: 16px;
+            cursor: pointer;
+            text-align: center;
+            padding: 20px;
+            transition: all 0.3s;
+        }
+        .package-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(0, 31, 77, 0.1);
+        }
+        .package-card.selected {
+            border: 2px solid #001f4d;
+            background: #f0f5ff;
+        }
+        .package-price {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #001f4d;
+        }
+        .btn-primary {
+            background: #001f4d;
+            color: white;
+            border: none;
+            padding: 14px 35px;
+            border-radius: 50px;
+            font-weight: 600;
+        }
     </style>
 </head>
 <body>
@@ -69,84 +94,101 @@
         </form>
     </div>
 
-    <!-- Firebase SDK (Modular) -->
-    <script type="module">
-      import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
-      import { getAuth } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js";
-      import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
+    <!-- Firebase SDK (Global - Compat) -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    <script>
+        // Firebase Config
+        const firebaseConfig = {
+            apiKey: "AIzaSyBmoIXKp8BABwBMqKKXhSUBLGnYSnKNAYg",
+            authDomain: "logovisualku.firebaseapp.com",
+            projectId: "logovisualku",
+            storageBucket: "logovisualku.firebasestorage.app",
+            messagingSenderId: "64489762880",
+            appId: "1:64489762880:web:f55f26b068044f1320afa5"
+        };
 
-      // Firebase config
-      const firebaseConfig = {
-        apiKey: "AIzaSyBmoIXKp8BABwBMqKKXhSUBLGnYSnKNAYg",
-        authDomain: "logovisualku.firebaseapp.com",
-        projectId: "logovisualku",
-        storageBucket: "logovisualku.firebasestorage.app",
-        messagingSenderId: "64489762880",
-        appId: "1:64489762880:web:f55f26b068044f1320afa5"
-      };
+        // Initialize Firebase
+        const app = firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
 
-      const app = initializeApp(firebaseConfig);
-      const auth = getAuth(app);
-      const db = getFirestore(app);
+        // Saat DOM siap
+        document.addEventListener('DOMContentLoaded', () => {
+            let selectedPackage = null;
 
-      // Pilih Paket
-      document.addEventListener('DOMContentLoaded', () => {
-        document.querySelectorAll('.package-card').forEach(card => {
-          card.addEventListener('click', () => {
-            document.querySelectorAll('.package-card').forEach(c => c.classList.remove('selected'));
-            card.classList.add('selected');
-            document.getElementById('packageInput').value = card.dataset.package;
-            document.getElementById('prizeInput').value = card.dataset.prize;
-          });
+            // Pilih Paket
+            document.querySelectorAll('.package-card').forEach(card => {
+                card.addEventListener('click', () => {
+                    // Hapus semua selected
+                    document.querySelectorAll('.package-card').forEach(c => c.classList.remove('selected'));
+                    // Tambahkan ke yang dipilih
+                    card.classList.add('selected');
+                    // Simpan ke input
+                    selectedPackage = {
+                        package: card.dataset.package,
+                        prize: card.dataset.prize
+                    };
+                    document.getElementById('packageInput').value = selectedPackage.package;
+                    document.getElementById('prizeInput').value = selectedPackage.prize;
+                });
+            });
+
+            // Submit Form
+            document.getElementById('contestForm').addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const form = e.target;
+
+                // Cek apakah paket dipilih
+                if (!selectedPackage) {
+                    alert("Pilih paket terlebih dahulu");
+                    return;
+                }
+
+                const contestCode = generateCode();
+
+                try {
+                    // Simpan ke Firestore
+                    await db.collection('contests').add({
+                        businessName: form.businessName.value,
+                        description: form.description.value,
+                        style: form.style.value,
+                        color: form.color.value,
+                        package: selectedPackage.package,
+                        prize: parseInt(selectedPackage.prize),
+                        contestCode: contestCode,
+                        whatsapp: form.whatsapp.value,
+                        chPassword: form.chPassword.value,
+                        status: 'pending',
+                        createdAt: new Date()
+                    });
+
+                    // Buat pesan WhatsApp
+                    const message = `*🆕 KONTES BARU DIBUAT*%0A%0A*Nama Bisnis:* ${encodeURIComponent(form.businessName.value)}%0A*Deskripsi:* ${encodeURIComponent(form.description.value)}%0A*Paket:* ${selectedPackage.package.toUpperCase()}%0A*Hadiah:* Rp ${parseInt(selectedPackage.prize).toLocaleString()}%0A*Kode Kontes:* ${contestCode}%0A*No HP CH:* ${form.whatsapp.value}%0A*Password:* ${form.chPassword.value}%0A%0AStatus: *Pending (Belum Bayar)*`;
+                    
+                    // Buka WhatsApp ke admin
+                    const whatsappLink = `https://wa.me/6285183089108?text=${message}`;
+                    window.open(whatsappLink, '_blank');
+
+                    // Kembali ke beranda
+                    setTimeout(() => {
+                        window.location.href = 'index.html';
+                    }, 1500);
+
+                } catch (error) {
+                    alert("Gagal simpan data: " + error.message);
+                }
+            });
         });
 
-        // Submit Form
-        document.getElementById('contestForm').addEventListener('submit', async (e) => {
-          e.preventDefault();
-          const form = e.target;
-          const package = form.package.value;
-          if (!package) return alert("Pilih paket");
-
-          const contestCode = generateCode();
-
-          // Simpan ke Firestore
-          await addDoc(collection(db, 'contests'), {
-            businessName: form.businessName.value,
-            description: form.description.value,
-            style: form.style.value,
-            color: form.color.value,
-            package,
-            prize: parseInt(form.prize.value),
-            contestCode,
-            whatsapp: form.whatsapp.value,
-            chPassword: form.chPassword.value,
-            status: 'pending',
-            createdAt: new Date()
-          });
-
-          // Buat pesan WhatsApp
-          const message = `*🆕 KONTES BARU DIBUAT*%0A%0A*Nama Bisnis:* ${encodeURIComponent(form.businessName.value)}%0A*Deskripsi:* ${encodeURIComponent(form.description.value)}%0A*Paket:* ${package.toUpperCase()}%0A*Hadiah:* Rp ${parseInt(form.prize.value).toLocaleString()}%0A*Kode Kontes:* ${contestCode}%0A*No HP CH:* ${form.whatsapp.value}%0A*Password:* ${form.chPassword.value}%0A%0AStatus: *Pending (Belum Bayar)*`;
-          
-          // Buka WhatsApp
-          const whatsappLink = `https://wa.me/6285183089108?text=${message}`;
-          window.open(whatsappLink, '_blank');
-
-          // Kembali ke beranda
-          setTimeout(() => {
-            window.location.href = 'index.html';
-          }, 1500); // Tunggu 1.5 detik agar WhatsApp terbuka
-        });
-      });
-
-      // Generate Kode 10 Digit
-      function generateCode() {
-        const now = new Date();
-        const date = String(now.getDate()).padStart(2, '0');
-        const month = String(now.getMonth() + 1).padStart(2, '0');
-        const year = String(now.getFullYear()).slice(-2);
-        const random = Math.floor(1000 + Math.random() * 9000);
-        return `${date}${month}${year}${random}`;
-      }
+        // Generate Kode 10 Digit
+        function generateCode() {
+            const now = new Date();
+            const date = String(now.getDate()).padStart(2, '0');
+            const month = String(now.getMonth() + 1).padStart(2, '0');
+            const year = String(now.getFullYear()).slice(-2);
+            const random = Math.floor(1000 + Math.random() * 9000);
+            return `${date}${month}${year}${random}`;
+        }
     </script>
 </body>
 </html>
