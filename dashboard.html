@@ -1,181 +1,71 @@
-<!DOCTYPE html>
-<html lang="id">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LogoVisualku - Buat Logo Impian Anda</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
-        body { background: #ffffff; color: #1a1a1a; }
-        .navbar { background: white; box-shadow: 0 2px 20px rgba(0, 0, 0, 0.1); padding: 1rem 0; }
-        .navbar-brand { font-weight: 700; color: #001f4d !important; font-size: 1.5rem; }
-        .nav-link { color: #333 !important; margin: 0 10px; }
-        .hero::before { content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background-image: url('https://licerainc.com/wp-content/uploads/2024/07/Untitled-design-2024-07-10T131151.756.jpg'); background-size: cover; opacity: 0.1; z-index: -1; }
-        .hero { min-height: 85vh; display: flex; align-items: center; justify-content: center; text-align: center; padding: 60px 20px; }
-        .hero h1 { font-size: 3.5rem; font-weight: 800; color: #001f4d; margin-bottom: 20px; text-shadow: 0 2px 4px rgba(255, 255, 255, 0.8); }
-        .hero p { font-size: 1.3rem; color: #555; max-width: 700px; margin: 0 auto 30px; }
-        .btn-primary { background: #001f4d; color: white; border: none; border-radius: 50px; padding: 14px 35px; font-weight: 600; }
-        footer { background: #001f4d; color: #ddd; padding: 60px 0 30px; }
-        footer a { color: #a0d8ff; text-decoration: none; }
-        .ch-login-card { max-width: 500px; margin: 40px auto; padding: 30px; background: white; border-radius: 16px; box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1); }
-    </style>
-</head>
-<body>
-    <!-- HEADER -->
-    <nav class="navbar navbar-expand-lg navbar-light sticky-top">
-        <div class="container">
-            <a class="navbar-brand" href="index.html">
-                <i class="fas fa-trophy me-2"></i>LogoVisualku
-            </a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav ms-auto">
-                    <li class="nav-item">
-                        <a class="nav-link active" href="index.html">Beranda</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="kontes.html">Kontes Aktif</a>
-                    </li>
-                    <li class="nav-item" id="profileBtnContainer" style="display:none;">
-                        <a class="nav-link" href="dashboard.html">Profil</a>
-                    </li>
-                    <li class="nav-item">
-                        <button class="btn btn-outline-primary btn-sm ms-2" id="loginBtn">Masuk</button>
-                    </li>
-                </ul>
-            </div>
-        </div>
-    </nav>
+<!-- Tambahkan di bagian <head> -->
+<script>
+  // Debugging global
+  window.addEventListener('error', (event) => {
+    console.error("Global Error:", event.message);
+  });
+</script>
 
-    <!-- Hero Section -->
-    <section class="hero">
-        <div class="container">
-            <h1>Siap Buat Logo Impian Anda?</h1>
-            <p>Mulai kontes sekarang dan dapatkan logo profesional dalam 3 hari!</p>
-            <a href="buat-kontes.html" class="btn btn-primary">Mulai Kontes Sekarang</a>
-        </div>
-    </section>
+<!-- Tambahkan di bagian script Firebase -->
+<script type="module">
+  // ... kode sebelumnya ...
 
-    <!-- CH Login Section -->
-    <div class="container py-5">
-        <div class="ch-login-card">
-            <h4 class="text-center mb-4">Lihat Kontes Order Anda</h4>
-            <p class="text-center text-muted mb-4">Masukkan kode kontes dan password Anda untuk melihat status kontes</p>
-            <div class="mb-3">
-                <input type="text" id="chContestCode" class="form-control" placeholder="Kode Kontes (10 digit)" required>
-            </div>
-            <div class="mb-4">
-                <input type="password" id="chPassword" class="form-control" placeholder="Password" required>
-            </div>
-            <button class="btn btn-primary w-100" id="chLoginBtn">Masuk sebagai CH</button>
-        </div>
-    </div>
-
-    <!-- FOOTER -->
-    <footer>
-        <div class="container">
-            <div class="row">
-                <div class="col-lg-4 mb-4">
-                    <h5>LogoVisualku</h5>
-                    <p>Platform kontes logo terbaik di Indonesia. Cepat, mudah, dan hasilnya luar biasa.</p>
-                </div>
-                <div class="col-lg-2 col-md-4 mb-4">
-                    <h6>Link Cepat</h6>
-                    <ul class="list-unstyled">
-                        <li class="mb-2"><a href="#">Beranda</a></li>
-                        <li class="mb-2"><a href="kontes.html">Kontes Aktif</a></li>
-                    </ul>
-                </div>
-                <div class="col-lg-3 col-md-4 mb-4">
-                    <h6>Kontak</h6>
-                    <p><i class="fas fa-whatsapp me-2"></i> 0851-8308-910</p>
-                    <p><i class="fas fa-envelope me-2"></i> reneingrid@gmail.com</p>
-                </div>
-                <div class="col-lg-3 col-md-4">
-                    <h6>Untuk Desainer</h6>
-                    <p>Hasilkan uang dari kreativitasmu!</p>
-                    <a href="daftar.html" class="btn btn-outline-light btn-sm">Daftar Sekarang</a>
-                </div>
-            </div>
-            <hr class="my-4" style="border-color: rgba(255, 255, 255, 0.2);">
-            <div class="text-center">
-                <p class="mb-0">&copy; 2024 LogoVisualku. Semua hak cipta dilindungi.</p>
-            </div>
-        </div>
-    </footer>
-
-    <!-- Firebase SDK (Modular) -->
-    <script type="module">
-      // Import Firebase
-      import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
-      import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js";
-
-      // Firebase Config
-      const firebaseConfig = {
-        apiKey: "AIzaSyBmoIXKp8BABwBMqKKXhSUBLGnYSnKNAYg",
-        authDomain: "logovisualku.firebaseapp.com",
-        projectId: "logovisualku",
-        storageBucket: "logovisualku.firebasestorage.app",
-        messagingSenderId: "64489762880",
-        appId: "1:64489762880:web:f55f26b068044f1320afa5"
+  onAuthStateChanged(auth, async (user) => {
+    console.log("Debug: User state changed", user);
+    
+    if (user) {
+      // User adalah admin/desainer
+      loginBtn.textContent = 'Keluar';
+      loginBtn.onclick = () => {
+        signOut(auth).then(() => {
+          window.location.href = 'index.html';
+        });
       };
-
-      // Initialize Firebase
-      const app = initializeApp(firebaseConfig);
-      const auth = getAuth(app);
-
-      // Get DOM elements
-      const loginBtn = document.getElementById('loginBtn');
-      const profileBtnContainer = document.getElementById('profileBtnContainer');
-
-      // Update buttons based on auth state
-      onAuthStateChanged(auth, (user) => {
-        if (user) {
-          // User is signed in
-          loginBtn.textContent = 'Keluar';
-          loginBtn.onclick = () => {
-            signOut(auth).then(() => {
-              window.location.href = 'index.html';
-            });
-          };
-          
-          // Show profile button
-          profileBtnContainer.style.display = 'block';
-        } else {
-          // User is signed out
-          loginBtn.textContent = 'Masuk';
-          loginBtn.onclick = () => {
-            window.location.href = 'login.html';
-          };
-          
-          // Hide profile button
-          profileBtnContainer.style.display = 'none';
+      
+      if (user.email === "admin@visualku.com") {
+        document.getElementById('adminTab').style.display = 'block';
+        showTab('admin');
+        loadAllContests();
+        return;
+      }
+      
+      // Cek desainer
+      try {
+        const usersQuery = query(collection(db, 'users'), where('uid', '==', user.uid));
+        const userSnapshot = await getDocs(usersQuery);
+        
+        if (!userSnapshot.empty) {
+          const userData = userSnapshot.docs[0].data();
+          if (userData.role === 'designer') {
+            document.getElementById('designerTab').style.display = 'block';
+            showTab('designer');
+            loadDesignerProfile(userData);
+            loadDesignerContests();
+            return;
+          }
         }
-      });
-
-      // CH Login
-      document.getElementById('chLoginBtn').addEventListener('click', () => {
-        const code = document.getElementById('chContestCode').value;
-        const password = document.getElementById('chPassword').value;
-
-        if (!code || !password) {
-          alert("Isi kode kontes dan password");
-          return;
-        }
-
-        // Simpan di sessionStorage
-        sessionStorage.setItem('chLoggedIn', 'true');
-        sessionStorage.setItem('chContestCode', code);
-        sessionStorage.setItem('chPassword', password);
-
-        // Redirect ke dashboard
-        window.location.href = 'dashboard.html';
-      });
-    </script>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
-</body>
-</html>
+      } catch (error) {
+        console.error("Error fetching user data:", error);
+      }
+    }
+    
+    // Cek CH
+    const chLoggedIn = sessionStorage.getItem('chLoggedIn');
+    const chContestCode = sessionStorage.getItem('chContestCode');
+    
+    if (chLoggedIn && chContestCode) {
+      loginBtn.textContent = 'Keluar';
+      loginBtn.onclick = () => {
+        sessionStorage.clear();
+        window.location.href = 'index.html';
+      };
+      
+      document.getElementById('chTab').style.display = 'block';
+      showTab('ch');
+      loadCHContest(chContestCode);
+    } else {
+      // Tidak ada yang login
+      window.location.href = 'index.html';
+    }
+  });
+</script>
